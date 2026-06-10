@@ -1,0 +1,3283 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>이미지미술학원 재료구매 신청</title>
+  <style>
+    :root {
+      --ink: #202124;
+      --muted: #667085;
+      --line: #d6dbe6;
+      --soft: #f4f6f9;
+      --paper: #ffffff;
+      --accent: #146c7c;
+      --accent-dark: #0f5866;
+      --ok: #1f7a4d;
+      --warn: #a85d00;
+      --bad: #a83232;
+      --shadow: 0 12px 30px rgba(25, 33, 46, .08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef1f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 16px 22px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .export-message {
+      min-height: 0;
+      padding: 0 22px;
+      background: var(--paper);
+      color: var(--muted);
+      border-bottom: 1px solid transparent;
+    }
+
+    .export-message.active {
+      min-height: 44px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      border-bottom-color: var(--line);
+    }
+
+    .export-message a {
+      color: var(--accent);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .export-message textarea {
+      width: 100%;
+      min-height: 120px;
+      margin-top: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 850;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover { background: var(--accent-dark); }
+    button.danger { color: var(--bad); border-color: #e6b9b9; }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+      background: #e8ebf0;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 40px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 124px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(340px, .9fr);
+      gap: 16px;
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .tabs, .bar, .panel, .admin-band {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 6px;
+      box-shadow: none;
+    }
+
+    .tabs button {
+      border: 0;
+      flex: 1;
+      background: transparent;
+    }
+
+    .tabs button.active {
+      background: #e7f4f7;
+      color: var(--accent-dark);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .month-pill {
+      display: inline-flex;
+      margin-top: 4px;
+      color: var(--ok);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .bar {
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.2fr) .75fr .65fr;
+      gap: 8px;
+    }
+
+    .admin-tools, .order-tools {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .admin-tools {
+      grid-template-columns: minmax(180px, .8fr) minmax(220px, 1fr);
+      align-items: end;
+    }
+
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+      gap: 10px;
+    }
+
+    .product {
+      min-height: 210px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+    }
+
+    .product h3 {
+      margin: 0 0 7px;
+      font-size: 15px;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid #e3e7ef;
+      white-space: nowrap;
+    }
+
+    .unavailable {
+      color: var(--bad);
+      background: #fff0f0;
+      border-color: #efc8c8;
+    }
+
+    .warn {
+      color: var(--warn);
+      background: #fff7e8;
+      border-color: #efd4a6;
+    }
+
+    .price-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .price {
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    aside {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      position: sticky;
+      top: 82px;
+    }
+
+    .panel {
+      padding: 13px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(20, 27, 38, .38);
+      z-index: 50;
+      padding: 18px;
+    }
+
+    .modal-backdrop.open {
+      display: grid;
+    }
+
+    .modal {
+      width: min(360px, 100%);
+      padding: 16px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal h2 {
+      margin-bottom: 10px;
+    }
+
+    .student-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .campus-box {
+      display: flex;
+      align-items: center;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      font-weight: 850;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #fafbfc;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    td.number, th.number {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .qty {
+      width: 64px;
+      min-height: 34px;
+      padding: 6px;
+      text-align: center;
+    }
+
+    .total-box {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #c6e4e9;
+      border-radius: 8px;
+      background: #eef9fb;
+      font-weight: 850;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 18px;
+      background: var(--soft);
+      border: 1px dashed #c6ceda;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .admin-band {
+      grid-column: 1 / -1;
+      padding: 14px;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .95fr) minmax(340px, .85fr);
+      gap: 14px;
+    }
+
+    .admin-panels {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .receipt {
+      background: #fff;
+      border: 1px solid #1f2937;
+      padding: 14px;
+      max-width: 620px;
+    }
+
+    .receipt-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: end;
+      border-bottom: 2px solid #1f2937;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+
+    .receipt-title strong {
+      font-size: 20px;
+    }
+
+    .product-admin {
+      max-height: 460px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .status-ok { color: var(--ok); font-weight: 800; }
+    .status-warn { color: var(--warn); font-weight: 800; }
+
+    .hidden { display: none !important; }
+
+    @media print {
+      body { background: #fff; }
+      header, .tabs, .bar, aside, .admin-grid > div:first-child, .admin-panels { display: none; }
+      main, .admin-band, .admin-grid { display: block; padding: 0; box-shadow: none; border: 0; }
+      .receipt { max-width: none; border: 0; }
+    }
+
+    @media (max-width: 960px) {
+      header, main, .filters, .admin-grid, .admin-panels {
+        grid-template-columns: 1fr;
+      }
+      aside { position: static; }
+      .top-actions { justify-content: start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>이미지미술학원 재료구매 신청</h1>
+      <span class="month-pill" id="monthLabel"></span>
+    </div>
+  </header>
+  <div class="export-message" id="exportMessage" role="status"></div>
+
+  <main>
+    <section>
+      <nav class="tabs">
+        <button class="active" data-tab="student">학생 주문</button>
+        <button data-tab="admin">관리자</button>
+      </nav>
+
+      <div class="bar">
+        <div class="filters">
+          <input id="search" type="search" placeholder="상품명, 색상, 옵션 검색">
+          <select id="categoryFilter"></select>
+          <select id="statusFilter">
+            <option value="all">전체 상태</option>
+            <option value="available">주문 가능</option>
+            <option value="unavailable">현재 주문 불가</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="catalog" id="catalog"></div>
+    </section>
+
+    <aside>
+      <section class="panel">
+        <h2>주문서</h2>
+        <div class="student-grid">
+          <input id="attendanceNo" placeholder="출결번호" inputmode="numeric" value="">
+          <input id="studentName" placeholder="학생명" value="">
+        </div>
+        <div class="student-grid">
+          <div class="campus-box" id="campusLabel"></div>
+          <input id="orderDate" type="date">
+        </div>
+        <div class="student-grid">
+          <select id="orderMode">
+            <option value="new">새 주문 작성</option>
+            <option value="add">기존 주문에 추가</option>
+            <option value="replace">기존 주문 수정</option>
+          </select>
+        </div>
+        <div class="order-tools">
+          <button id="loadExistingOrder">내 주문 불러오기</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>상품</th>
+              <th class="number">수량</th>
+              <th class="number">금액</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="cartRows"></tbody>
+        </table>
+        <div class="total-box">
+          <span>청구금액</span>
+          <span id="cartTotal">0원</span>
+        </div>
+        <div class="top-actions" style="margin-top:12px">
+          <button class="primary" id="saveOrder">주문 저장</button>
+        </div>
+        <p class="subtle" id="saveMessage" role="status"></p>
+        <p class="subtle">학생 화면 가격은 100원 단위로 올림 표시합니다. 상품번호와 구매 URL은 관리자 화면에만 표시됩니다.</p>
+      </section>
+    </aside>
+
+    <section class="admin-band" id="adminArea">
+      <div class="top-actions" style="align-items:center;margin-bottom:10px">
+        <h2 style="margin:0;margin-right:auto">관리자</h2>
+        <button id="exportOrders">주문 CSV</button>
+        <button id="exportSmsXlsx">문자발송 CSV</button>
+        <button id="printReceipt">명세표 인쇄</button>
+        <button id="resetApp" class="danger">다음 달 주문 시작</button>
+        <button id="adminLogout">관리자 로그아웃</button>
+      </div>
+      <div class="admin-tools">
+        <label>
+          <span class="subtle">수정 마감일</span>
+          <input id="deadlineDate" type="date">
+        </label>
+        <p class="subtle" id="deadlineStatus"></p>
+      </div>
+      <div class="admin-grid">
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>학생</th>
+                <th>상태</th>
+                <th>주문일</th>
+                <th class="number">품목수</th>
+                <th class="number">청구금액</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="orderRows"></tbody>
+          </table>
+        </div>
+        <div>
+          <textarea id="smsText" readonly></textarea>
+          <div style="height:10px"></div>
+          <div id="receipt" class="receipt"></div>
+        </div>
+      </div>
+
+      <div class="admin-panels">
+        <div>
+          <h2>주문 품목 모음</h2>
+          <div id="purchaseGroups"></div>
+        </div>
+        <div>
+          <h2>상품 관리</h2>
+          <div class="product-admin">
+            <table>
+              <thead>
+                <tr>
+                  <th>상품</th>
+                  <th class="number">원가</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody id="productAdminRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="adminGate" role="dialog" aria-modal="true" aria-labelledby="adminGateTitle">
+    <div class="modal">
+      <h2 id="adminGateTitle">관리자 확인</h2>
+      <input id="adminPasswordInput" type="password" placeholder="관리자 비밀번호">
+      <p class="subtle" id="adminPasswordMessage" role="status"></p>
+      <div class="top-actions" style="margin-top:12px">
+        <button id="adminPasswordCancel">취소</button>
+        <button class="primary" id="adminPasswordSubmit">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (new URLSearchParams(window.location.search).get("reset") === "1") {
+      Object.keys(localStorage)
+        .filter(key => key.startsWith("imageArtCartV3_") || key.startsWith("imageArtOrdersV3_"))
+        .forEach(key => localStorage.removeItem(key));
+      history.replaceState(null, "", window.location.pathname);
+    }
+
+    const now = new Date();
+    const seoulParts = new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(now).reduce((acc, part) => ({ ...acc, [part.type]: part.value }), {});
+    const monthText = `${seoulParts.year}년 ${Number(seoulParts.month)}월 신청`;
+    const todayText = `${seoulParts.year}-${seoulParts.month}-${seoulParts.day}`;
+    const won = value => `${Math.round(value || 0).toLocaleString("ko-KR")}원`;
+    const roundDisplay = value => Math.ceil((Number(value) || 0) / 100) * 100;
+    const adminPassword = "1234";
+    const campusConfigs = {
+      painting: { id: "painting", label: "회화반", account: "본관" },
+      design: { id: "design", label: "디자인반", account: "본관" },
+      davinci: { id: "davinci", label: "다빈치관", account: "다빈치" },
+      yongsan: { id: "yongsan", label: "용산캠퍼스", account: "본관" }
+    };
+    const campusParam = new URLSearchParams(window.location.search).get("campus");
+    const savedCampusId = localStorage.getItem("imageArtCampusV3");
+    const campus = campusConfigs[campusParam] || campusConfigs[savedCampusId] || campusConfigs.painting;
+    localStorage.setItem("imageArtCampusV3", campus.id);
+    const storageKey = name => `imageArt${name}V3_${campus.id}`;
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqNanBl77-1EI0ryiZ5BwJHV_HIud8Azr9fqmiIo5aVORvEVUrPoaKgn27XrxploXWPA/exec"; // Google Apps Script 배포 URL을 여기에 붙여넣으세요.
+    const useCloud = () => APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("https://");
+
+    function apiGet(action, params = {}) {
+      if (!useCloud()) return Promise.resolve(null);
+      return new Promise((resolve, reject) => {
+        const callback = `imageArtCallback_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        const query = new URLSearchParams({ action, campus: campus.id, callback, ...params });
+        const script = document.createElement("script");
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("Google Sheets 응답 시간이 초과되었습니다."));
+        }, 15000);
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[callback];
+          script.remove();
+        }
+        window[callback] = data => {
+          cleanup();
+          resolve(data);
+        };
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("Google Sheets 연결에 실패했습니다."));
+        };
+        script.src = `${APPS_SCRIPT_URL}?${query.toString()}`;
+        document.body.appendChild(script);
+      });
+    }
+
+    function apiPost(payload) {
+      if (!useCloud()) return Promise.resolve();
+      return fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ campus: campus.id, ...payload })
+      });
+    }
+
+    const baseProducts = [
+      {
+        id: "ire-tombow-monoj",
+        title: "톰보우 모노J 연필 1타스 (12자루) 종류선택",
+        category: "연필/지우개",
+        source: "이레화방",
+        productNo: "2286",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=2286",
+        rawPrice: 11120,
+        options: [
+          "6B - 1타스 (12자루)",
+          "4B - 1타스 (12자루)",
+          "3B - 1타스 (12자루)",
+          "2B - 1타스 (12자루)",
+          "B - 1타스 (12자루)",
+          "HB - 1타스 (12자루)",
+          "H - 1타스 (12자루)",
+          "2H - 1타스 (12자루)",
+          "3H - 1타스 (12자루)",
+          "4H - 1타스 (12자루)"
+        ]
+      },
+      {
+        id: "ire-tombow-eraser",
+        title: "톰보우 미술용 지우개 1팩 (10개입)",
+        category: "연필/지우개",
+        source: "이레화방",
+        rawPrice: 2300,
+        productNo: "1135",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=1135"
+      },
+      {
+        id: "ire-hwahong-eraser-pink",
+        title: "화홍 4B 미술용 지우개 1팩 (10개입) 핑크색",
+        category: "연필/지우개",
+        source: "이레화방",
+        rawPrice: 2840,
+        productNo: "72857",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=72857"
+      },
+      {
+        id: "ire-mission-white-a",
+        title: "미젤로 미션 화이트클래스 수채화물감 15ml 낱색 A시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        productNo: "41460",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=41460",
+        rawPrice: 2650,
+        options: [
+          "721 lemon yellow",
+          "722 permanent yellow light",
+          "723 permanent yellow deep",
+          "741 cerelean blue",
+          "744 prussian blue",
+          "751 bright opera",
+          "774 bright red",
+          "705 grey of grey",
+          "706 red grey",
+          "727 naples yellow",
+          "793 cool grey no.1",
+          "794 cool grey no.2",
+          "795 cool grey no.3",
+          "796 warm grey no.1",
+          "797 warm grey no.2",
+          "798 warm grey no.3"
+        ]
+      },
+      {
+        id: "ire-mission-white-b",
+        title: "미젤로 미션 화이트클래스 수채화물감 낱색 15ml - B시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        productNo: "41461",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=41461",
+        rawPrice: 3060,
+        options: [
+          "711 permanent red",
+          "712 rose",
+          "713 rose madder",
+          "718 bright yellow orange",
+          "719 violet pink",
+          "731 greenish yellow",
+          "736 viridian",
+          "742 coblalt blue",
+          "743 peacock blue",
+          "745 ultramarine deep",
+          "752 red violet",
+          "753 violet deep",
+          "762 light red",
+          "763 umber brown",
+          "764 burnt sienna",
+          "766 vandyke brown",
+          "767 sepia",
+          "768 yellow ochre",
+          "703 neutral tint",
+          "704 davys grey",
+          "720 apricot",
+          "730 compose blue",
+          "754 shell pink",
+          "779 dazzling blue",
+          "783 shadow green",
+          "788 emerald green",
+          "791 violet grey"
+        ]
+      },
+      {
+        id: "ire-mission-white-c",
+        title: "미젤로 미션 화이트클래스 수채화물감 15ml 낱색 C시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        productNo: "41462",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=41462",
+        rawPrice: 3630,
+        options: [
+          "717 permanent orange",
+          "732 yellow green",
+          "733 olive green",
+          "735 dark sap green",
+          "746 background indigo",
+          "784 bamboo green",
+          "792 backgroun shadow violet",
+          "758 lilac",
+          "777 lavender",
+          "778 verditer blue",
+          "780 classic blue",
+          "789 cobalt green"
+        ]
+      },
+      {
+        id: "ire-mission-white-d",
+        title: "미젤로 미션 화이트클래스 수채화물감 낱색 15ml - D시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        productNo: "41463",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=41463",
+        rawPrice: 4690,
+        options: [
+          "714 crimson lake",
+          "765 red brown"
+        ]
+      },
+      {
+        id: "ire-mission-white-34",
+        title: "미젤로 미션 화이트클래스 수채화물감 34색 세트 (15ml) - MWC-7034",
+        category: "수채화물감",
+        source: "이레화방",
+        productNo: "41449",
+        rawPrice: 112080
+      },
+      {
+        id: "ire-mission-tint-17",
+        title: "미젤로 미션 화이트클래스 수채화물감 TINT 틴트칼라 17색 세트 (15ml) - MWC-7017",
+        category: "수채화물감",
+        source: "이레화방",
+        productNo: "72854",
+        rawPrice: 57690
+      },
+      {
+        id: "ire-swc-a",
+        title: "신한 SWC 수채화물감 낱색 15ml A시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 2840,
+        options: [
+          {
+            name: "803(210) crimson lake - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "807(220) permanent rose - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "814(221) permanent red - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "818 (222) scalret lake - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "825(226) shell pink - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "858(236) permanent yellow light - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "861(233) lemon yellow - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "863(230) naples yellow - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "865 jaune brilliant - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "866(232) jaune brilliant no.2 - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "881 oxide of chromium(신규) - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "885(285) green deep - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "886 phthalo green dark(신규) - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "888(261) viridian hue - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "892 green pale - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "899(286) peacock green - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "913(304) horizon blue - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "915(350) blue grey - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "920(292) cerulean blue hue - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "923(291) cobalt blue hue - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "928(297) prussian blue - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "931(303) royal blue - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "933(298) indigo - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "944(317) lilac - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "946 pruple grey - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "959(330) light red - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "963(334) burnt sienna - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "970(234) yellow ochre - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "973 umber - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "977(336) sepia - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "981(338) ivory black - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "989(355) davys grey - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "991 grey - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "993(201) chinese white - A시리즈",
+            rawPrice: 2840
+          },
+          {
+            name: "995 titanium white - A시리즈",
+            rawPrice: 2840
+          }
+        ],
+        productNo: "2805",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=2805"
+      },
+      {
+        id: "ire-swc-b",
+        title: "신한 SWC 수채화물감 낱색 15ml B시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        productNo: "2806",
+        rawPrice: 3130,
+        options: [
+          "805 alizarin crimson",
+          "806 quinacriodone red(신규)",
+          "809(211) carmine",
+          "813 pyrrole red(신규)",
+          "821(213) opera",
+          "823(225) brilliant pink",
+          "833(219) vermilion hue",
+          "869 terre verte(yellow shade)(신규)",
+          "870(274) olive green",
+          "872(277) leaf green",
+          "875(267) permanent green no.2",
+          "883(262) hookers green",
+          "890(264) emerald green nova",
+          "895 terre verte(신규)",
+          "911(301) peacock blue",
+          "917(295) verditer blue",
+          "924 phthalo blue(red shade)(신규)",
+          "925(293) ultramarine light",
+          "926(294) ultramarine deeP",
+          "936(316) lavender",
+          "950(370) bright rose",
+          "957(345) brown red",
+          "961(344) brown",
+          "964(333) brunt umber",
+          "966(331) raw umber",
+          "967(332) raw sienna",
+          "975(339) vandyke brown",
+          "976 vandyke brown 2(신규)",
+          "984 peach black",
+          "986(357) neutral tint",
+          "987 paynes grey(신규)",
+          "943 MINERAL VIOLET GREY (신규칼라)",
+          "937 Ultramarine violet"
+        ]
+      },
+      {
+        id: "ire-swc-c",
+        title: "신한 SWC 수채화물감 낱색 15ml C시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        productNo: "2807",
+        rawPrice: 3840,
+        options: [
+          "816(223) brown madder",
+          "832(218) vermilion",
+          "835(216) cadmium red orange",
+          "838(247) brilliant orange",
+          "840(238) permanent yellow orange",
+          "843(244) cadmium yellow orange",
+          "851 cadmium yellow pale(신규)",
+          "856(237) permanent yellow deep",
+          "867 aureolin",
+          "871 cadmium green pale(신규)",
+          "874(266) permanent green no.1",
+          "876 cadmium green middle(신규)",
+          "877 cadmium green(신규)",
+          "878 cadmium green deep(신규)",
+          "879(275) sap green",
+          "887(260) viridian",
+          "897(279) shadow green",
+          "903 turquoise blue light(신규)",
+          "904 turquoise blue",
+          "906 blue pale",
+          "908(302) marine blue",
+          "940(312) mineral violet",
+          "948(375) bright violet"
+        ]
+      },
+      {
+        id: "ire-swc-d",
+        title: "신한 SWC 수채화물감 낱색 15ml D시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 4840,
+        options: [
+          {
+            name: "811(212) rose madder",
+            rawPrice: 4840
+          },
+          {
+            name: "828(215) cadmium red deep",
+            rawPrice: 4840
+          },
+          {
+            name: "847(243) cadmium yellow deep",
+            rawPrice: 4840
+          },
+          {
+            name: "849 cadmium yellow(신규)",
+            rawPrice: 4840
+          },
+          {
+            name: "850 cadmium yellow light(신규)",
+            rawPrice: 4840
+          },
+          {
+            name: "853(245) indian yellow",
+            rawPrice: 4840
+          },
+          {
+            name: "868(246) greenish yellow",
+            rawPrice: 4840
+          },
+          {
+            name: "873 cadmium green light(신규)",
+            rawPrice: 4840
+          },
+          {
+            name: "922(290) cobalt blue",
+            rawPrice: 4840
+          },
+          {
+            name: "938(315) permanent violet",
+            rawPrice: 4840
+          },
+          {
+            name: "953(314) permanent magenta",
+            rawPrice: 4840
+          }
+        ],
+        productNo: "2808",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=2808"
+      },
+      {
+        id: "ire-swc-32",
+        title: "신한 SWC 수채화물감 32색 세트",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 89000,
+        productNo: "3054",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=3054"
+      },
+      {
+        id: "ire-swc-tint-12",
+        title: "신한 SWC 수채화물감 틴트 12색 세트",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 35050,
+        productNo: "54182",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=54182"
+      },
+      {
+        id: "ire-holbein-hwc-a",
+        title: "홀베인 HWC 수채화물감 15ml 낱색 A시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 5770,
+        productNo: "62743",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=62743",
+        options: [
+          {
+            name: "w201 chinese white",
+            rawPrice: 5770
+          },
+          {
+            name: "w203 titanium white",
+            rawPrice: 5770
+          },
+          {
+            name: "w206 pyrrole rubin",
+            rawPrice: 5770
+          },
+          {
+            name: "w207 pyrrole red",
+            rawPrice: 5770
+          },
+          {
+            name: "w211 carmine",
+            rawPrice: 5770
+          },
+          {
+            name: "w212 rose madder",
+            rawPrice: 5770
+          },
+          {
+            name: "w219 vermilion hue",
+            rawPrice: 5770
+          },
+          {
+            name: "w225 brilliant pink",
+            rawPrice: 5770
+          },
+          {
+            name: "w226 shell pink",
+            rawPrice: 5770
+          },
+          {
+            name: "w230 naples yellow",
+            rawPrice: 5770
+          },
+          {
+            name: "w231 jaune brillant no.1",
+            rawPrice: 5770
+          },
+          {
+            name: "w232 (TINT) jaune brillant no.2",
+            rawPrice: 5770
+          },
+          {
+            name: "w233 lemon yellow",
+            rawPrice: 5770
+          },
+          {
+            name: "w234 yellow ochre",
+            rawPrice: 5770
+          },
+          {
+            name: "w235 permanent yellow lemon",
+            rawPrice: 5770
+          },
+          {
+            name: "w236 permanent yellow light",
+            rawPrice: 5770
+          },
+          {
+            name: "w237 permanent yellow deep",
+            rawPrice: 5770
+          },
+          {
+            name: "w238 permanent yelllow orange",
+            rawPrice: 5770
+          },
+          {
+            name: "w261 viridian hue",
+            rawPrice: 5770
+          },
+          {
+            name: "w265 terre verte",
+            rawPrice: 5770
+          },
+          {
+            name: "w266 permanent green no.1",
+            rawPrice: 5770
+          },
+          {
+            name: "w267 permanent green no.2",
+            rawPrice: 5770
+          },
+          {
+            name: "w271 compose green",
+            rawPrice: 5770
+          },
+          {
+            name: "w274 olive green",
+            rawPrice: 5770
+          },
+          {
+            name: "w291 cobalt blue hue",
+            rawPrice: 5770
+          },
+          {
+            name: "w293 umtramarnie light",
+            rawPrice: 5770
+          },
+          {
+            name: "w294 umtramarnie deep",
+            rawPrice: 5770
+          },
+          {
+            name: "w295 verditer blue",
+            rawPrice: 5770
+          },
+          {
+            name: "w296 compose blue",
+            rawPrice: 5770
+          },
+          {
+            name: "w297 prussian blue",
+            rawPrice: 5770
+          },
+          {
+            name: "w298 indigo",
+            rawPrice: 5770
+          },
+          {
+            name: "w301 peacock blue",
+            rawPrice: 5770
+          },
+          {
+            name: "w304 (TINT) horizon blue",
+            rawPrice: 5770
+          },
+          {
+            name: "w307 phthalo blue yellow shade",
+            rawPrice: 5770
+          },
+          {
+            name: "w308 phthalo blue red shade",
+            rawPrice: 5770
+          },
+          {
+            name: "w316 (TINT) lavender",
+            rawPrice: 5770
+          },
+          {
+            name: "w317 (TINT) lilac",
+            rawPrice: 5770
+          },
+          {
+            name: "w329 umber",
+            rawPrice: 5770
+          },
+          {
+            name: "w330 light red",
+            rawPrice: 5770
+          },
+          {
+            name: "w331 raw umber",
+            rawPrice: 5770
+          },
+          {
+            name: "w332 raw sienna",
+            rawPrice: 5770
+          },
+          {
+            name: "w333 burnt umber",
+            rawPrice: 5770
+          },
+          {
+            name: "w334 burnt sienna",
+            rawPrice: 5770
+          },
+          {
+            name: "w335 indian red",
+            rawPrice: 5770
+          },
+          {
+            name: "w336 sepia",
+            rawPrice: 5770
+          },
+          {
+            name: "w337 peach black",
+            rawPrice: 5770
+          },
+          {
+            name: "w338 ivory black",
+            rawPrice: 5770
+          },
+          {
+            name: "w339 vandyke brown",
+            rawPrice: 5770
+          },
+          {
+            name: "w340 lamp black",
+            rawPrice: 5770
+          },
+          {
+            name: "w351 yellow grey",
+            rawPrice: 5770
+          },
+          {
+            name: "w352 green grey",
+            rawPrice: 5770
+          },
+          {
+            name: "w353 grey of grey",
+            rawPrice: 5770
+          },
+          {
+            name: "w355 davys grey",
+            rawPrice: 5770
+          },
+          {
+            name: "w356 paynes grey",
+            rawPrice: 5770
+          },
+          {
+            name: "w357 (TINT) neutral tint",
+            rawPrice: 5770
+          }
+        ]
+      },
+      {
+        id: "ire-holbein-hwc-b",
+        title: "홀베인 HWC 수채화물감 15ml 낱색 B시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 6400,
+        productNo: "62754",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=62754",
+        options: [
+          {
+            name: "w208 perylene maroon",
+            rawPrice: 6400
+          },
+          {
+            name: "w213 opera",
+            rawPrice: 6400
+          },
+          {
+            name: "w222 scarlet lake",
+            rawPrice: 6400
+          },
+          {
+            name: "w248 gamboge nova",
+            rawPrice: 6400
+          },
+          {
+            name: "w250 imidazolone yellow",
+            rawPrice: 6400
+          },
+          {
+            name: "w251 imidazolone lemon",
+            rawPrice: 6400
+          },
+          {
+            name: "w262 hookers green",
+            rawPrice: 6400
+          },
+          {
+            name: "w264 emerald green nova",
+            rawPrice: 6400
+          },
+          {
+            name: "w275 sap green",
+            rawPrice: 6400
+          },
+          {
+            name: "w277 leaf green",
+            rawPrice: 6400
+          },
+          {
+            name: "w278 bamboo green",
+            rawPrice: 6400
+          },
+          {
+            name: "w299 turquoise blue",
+            rawPrice: 6400
+          },
+          {
+            name: "w305 manganese blue nova",
+            rawPrice: 6400
+          },
+          {
+            name: "w312 mineral violet",
+            rawPrice: 6400
+          },
+          {
+            name: "w313 mars violet",
+            rawPrice: 6400
+          },
+          {
+            name: "w315 permanent violet",
+            rawPrice: 6400
+          },
+          {
+            name: "w320 quinacridone violet",
+            rawPrice: 6400
+          },
+          {
+            name: "w341 imidazolone brown",
+            rawPrice: 6400
+          },
+          {
+            name: "w370 bright rose",
+            rawPrice: 6400
+          },
+          {
+            name: "w375 bright violet",
+            rawPrice: 6400
+          }
+        ]
+      },
+      {
+        id: "ire-holbein-hwc-c",
+        title: "홀베인 HWC 수채화물감 15ml 낱색 C시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 8770,
+        productNo: "62755",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=62755",
+        options: [
+          {
+            name: "w205 Quinacridone Red",
+            rawPrice: 8770
+          },
+          {
+            name: "w209 Permanent Alizarin Crimson",
+            rawPrice: 8770
+          },
+          {
+            name: "w210 crimson lake",
+            rawPrice: 8770
+          },
+          {
+            name: "w227 Quinacridone Scarlet",
+            rawPrice: 8770
+          },
+          {
+            name: "w240 Cadmium Yellow Lemon",
+            rawPrice: 8770
+          },
+          {
+            name: "w241 Cadmium Yellow Pale",
+            rawPrice: 8770
+          },
+          {
+            name: "w242 Cadmium Yellow Light",
+            rawPrice: 8770
+          },
+          {
+            name: "w243 Cadmium Yellow Deep",
+            rawPrice: 8770
+          },
+          {
+            name: "w244 Cadmuim Yellow Orange",
+            rawPrice: 8770
+          },
+          {
+            name: "w246 Greenish Yellow",
+            rawPrice: 8770
+          },
+          {
+            name: "w247 Brilliant Orange",
+            rawPrice: 8770
+          },
+          {
+            name: "w249 Isoindolinone yellow deep",
+            rawPrice: 8770
+          },
+          {
+            name: "w269 Cadmium Green Pale",
+            rawPrice: 8770
+          },
+          {
+            name: "w270 Cadmium Green Deep",
+            rawPrice: 8770
+          },
+          {
+            name: "w302 Marine Blue",
+            rawPrice: 8770
+          },
+          {
+            name: "w303 Royal Blue",
+            rawPrice: 8770
+          },
+          {
+            name: "w319 Quinacridone Magenta",
+            rawPrice: 8770
+          },
+          {
+            name: "w342 Quinacridone gold",
+            rawPrice: 8770
+          },
+          {
+            name: "w390 Gold",
+            rawPrice: 8770
+          },
+          {
+            name: "w391 Silver",
+            rawPrice: 8770
+          }
+        ]
+      },
+      {
+        id: "ire-holbein-hwc-d",
+        title: "홀베인 HWC 수채화물감 15ml 낱색 D시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 10900,
+        productNo: "62756",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=62756",
+        options: [
+          {
+            name: "w239 Aureolin",
+            rawPrice: 10900
+          },
+          {
+            name: "w263 Cobalt Green",
+            rawPrice: 10900
+          },
+          {
+            name: "w279 Shadow Green",
+            rawPrice: 10900
+          },
+          {
+            name: "w290 Cobalt Blue",
+            rawPrice: 10900
+          },
+          {
+            name: "w292 Cerulean Blue",
+            rawPrice: 10900
+          },
+          {
+            name: "w306 Cobalt Turquoise Light",
+            rawPrice: 10900
+          }
+        ]
+      },
+      {
+        id: "ire-holbein-hwc-e",
+        title: "홀베인 HWC 수채화물감 15ml 낱색 E시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 14380,
+        productNo: "62757",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=62757",
+        options: [
+          {
+            name: "w214 Cadmium Red Light",
+            rawPrice: 14380
+          },
+          {
+            name: "w215 Cadmium Red Deep",
+            rawPrice: 14380
+          },
+          {
+            name: "w216 Cadmium Red Orange",
+            rawPrice: 14380
+          },
+          {
+            name: "w217 Cadmuim Red Purple",
+            rawPrice: 14380
+          },
+          {
+            name: "w260 Viridian",
+            rawPrice: 14380
+          }
+        ]
+      },
+      {
+        id: "ire-holbein-hwc-f",
+        title: "홀베인 HWC 수채화물감 15ml 낱색 F시리즈",
+        category: "수채화물감",
+        source: "이레화방",
+        rawPrice: 17790,
+        productNo: "62758",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=62758",
+        options: [
+          {
+            name: "w218 Vermilion",
+            rawPrice: 17790
+          },
+          {
+            name: "w310 Cobalt Violet Light",
+            rawPrice: 17790
+          }
+        ]
+      },
+      {
+        id: "ire-shinhan-palette-35",
+        title: "신한 전문가 수채화 방탄 파레트 35칸+2칸",
+        category: "팔레트/보조재",
+        source: "이레화방",
+        rawPrice: 16260,
+        productNo: "40262",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=40262"
+      },
+      {
+        id: "ire-shinhan-palette-18",
+        title: "신한 전문가 수채화 방탄 보조 파레트 18칸",
+        category: "팔레트/보조재",
+        source: "이레화방",
+        productNo: "41183",
+        rawPrice: 7620
+      },
+      {
+        id: "ire-shinhan-palette-set",
+        title: "[세트상품] 신한 전문가 수채화 방탄 파레트 35칸 + 18칸 보조 파레트 세트",
+        category: "팔레트/보조재",
+        source: "이레화방",
+        rawPrice: 26790,
+        available: false,
+        productNo: "11382988",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=11382988"
+      },
+      {
+        id: "ire-hwahong-782-single",
+        title: "화홍 782R 둥근붓 낱자루",
+        category: "붓",
+        source: "이레화방",
+        rawPrice: 1710,
+        options: [
+          {
+            name: "1호",
+            rawPrice: 1710
+          },
+          {
+            name: "2호",
+            rawPrice: 1800
+          },
+          {
+            name: "4호",
+            rawPrice: 2180
+          },
+          {
+            name: "6호",
+            rawPrice: 2560
+          },
+          {
+            name: "8호",
+            rawPrice: 3270
+          },
+          {
+            name: "10호",
+            rawPrice: 4220
+          },
+          {
+            name: "12호",
+            rawPrice: 5170
+          },
+          {
+            name: "14호",
+            rawPrice: 6220
+          },
+          {
+            name: "16호",
+            rawPrice: 7220
+          },
+          {
+            name: "18호",
+            rawPrice: 8260
+          },
+          {
+            name: "20호",
+            rawPrice: 9500
+          },
+          {
+            name: "30호",
+            rawPrice: 15200
+          }
+        ],
+        productNo: "2266",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=2266"
+      },
+      {
+        id: "ire-hwahong-782-set",
+        title: "화홍 782R 둥근붓 3본 세트",
+        category: "붓",
+        source: "이레화방",
+        rawPrice: 15670,
+        options: [
+          "8,12,16호"
+        ],
+        productNo: "33252",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=33252"
+      },
+      {
+        id: "ire-hwahong-926",
+        title: "화홍 926 구성붓 평붓 납작붓 낱자루",
+        category: "붓",
+        source: "이레화방",
+        productNo: "566",
+        rawPrice: 1520,
+        options: [
+          {
+            name: "1호-R(둥근붓)",
+            rawPrice: 1520
+          },
+          {
+            name: "1호",
+            rawPrice: 1610
+          },
+          {
+            name: "2호",
+            rawPrice: 1800
+          },
+          {
+            name: "3호",
+            rawPrice: 2180
+          },
+          {
+            name: "4호",
+            rawPrice: 2610
+          },
+          {
+            name: "5호",
+            rawPrice: 2990
+          },
+          {
+            name: "6호",
+            rawPrice: 3560
+          },
+          {
+            name: "7호",
+            rawPrice: 4080
+          },
+          {
+            name: "8호",
+            rawPrice: 4650
+          },
+          {
+            name: "10호",
+            rawPrice: 5890
+          },
+          {
+            name: "12호",
+            rawPrice: 9020
+          }
+        ]
+      },
+      {
+        id: "ire-hwahong-972f",
+        title: "화홍 972F 구성붓 사선붓 평붓 낱자루",
+        category: "디자인도구",
+        source: "이레화방",
+        rawPrice: 1850,
+        options: [
+          {
+            name: "1호",
+            rawPrice: 1850
+          },
+          {
+            name: "1/1호",
+            rawPrice: 1940
+          },
+          {
+            name: "2호",
+            rawPrice: 2130
+          },
+          {
+            name: "3호",
+            rawPrice: 2510
+          },
+          {
+            name: "4호",
+            rawPrice: 3080
+          },
+          {
+            name: "5호",
+            rawPrice: 3610
+          },
+          {
+            name: "6호",
+            rawPrice: 4320
+          },
+          {
+            name: "7호",
+            rawPrice: 5080
+          },
+          {
+            name: "8호",
+            rawPrice: 6460
+          }
+        ],
+        productNo: "564",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=564"
+      },
+      {
+        id: "ire-hwahong-132f",
+        title: "화홍 132F 배경붓 빽붓 낱자루",
+        category: "붓",
+        source: "이레화방",
+        productNo: "3229",
+        rawPrice: 4460,
+        options: [
+          {
+            name: "1호 (30mm)",
+            rawPrice: 4460
+          },
+          {
+            name: "2호 (40mm)",
+            rawPrice: 5130
+          },
+          {
+            name: "3호 (50mm)",
+            rawPrice: 6080
+          },
+          {
+            name: "4호 (65mm)",
+            rawPrice: 7030
+          },
+          {
+            name: "5호 (80mm)",
+            rawPrice: 8450
+          },
+          {
+            name: "6호 (100mm)",
+            rawPrice: 10260
+          },
+          {
+            name: "7호 (125mm)",
+            rawPrice: 11970
+          },
+          {
+            name: "8호 (150mm)",
+            rawPrice: 13960
+          },
+          {
+            name: "10호(200mm)",
+            rawPrice: 34670
+          }
+        ]
+      },
+      {
+        id: "ire-barbara-70r",
+        title: "바바라 70R 수채화붓 둥근붓 낱자루",
+        category: "붓",
+        source: "이레화방",
+        productNo: "2459",
+        rawPrice: 6550,
+        options: [
+          {
+            name: "0호",
+            rawPrice: 6550
+          },
+          {
+            name: "2호",
+            rawPrice: 9880
+          },
+          {
+            name: "4호",
+            rawPrice: 11970
+          },
+          {
+            name: "6호",
+            rawPrice: 14820
+          },
+          {
+            name: "8호",
+            rawPrice: 17190
+          },
+          {
+            name: "10호",
+            rawPrice: 19380
+          },
+          {
+            name: "12호",
+            rawPrice: 24220
+          },
+          {
+            name: "14호",
+            rawPrice: 26410
+          },
+          {
+            name: "16호",
+            rawPrice: 30970
+          },
+          {
+            name: "18호",
+            rawPrice: 35530
+          },
+          {
+            name: "20호",
+            rawPrice: 36760
+          },
+          {
+            name: "22호",
+            rawPrice: 41320
+          },
+          {
+            name: "24호",
+            rawPrice: 43510
+          }
+        ]
+      },
+      {
+        id: "ire-barbara-300r",
+        title: "바바라 300R 수채화붓 둥근붓 낱자루",
+        category: "붓",
+        source: "이레화방",
+        rawPrice: 4940,
+        options: [
+          {
+            name: "00호",
+            rawPrice: 4940
+          },
+          {
+            name: "0호",
+            rawPrice: 5220
+          },
+          {
+            name: "2호",
+            rawPrice: 6170
+          },
+          {
+            name: "4호",
+            rawPrice: 7030
+          },
+          {
+            name: "6호",
+            rawPrice: 7790
+          },
+          {
+            name: "8호",
+            rawPrice: 9210
+          },
+          {
+            name: "10호",
+            rawPrice: 10070
+          },
+          {
+            name: "12호",
+            rawPrice: 11020
+          },
+          {
+            name: "14호",
+            rawPrice: 13870
+          },
+          {
+            name: "16호",
+            rawPrice: 14720
+          },
+          {
+            name: "18호",
+            rawPrice: 15670
+          },
+          {
+            name: "20호",
+            rawPrice: 16530
+          },
+          {
+            name: "22호",
+            rawPrice: 20330
+          },
+          {
+            name: "24호",
+            rawPrice: 22130
+          }
+        ],
+        productNo: "2460",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=2460"
+      },
+      {
+        id: "herend-r5200",
+        title: "헤렌드 R5200 수채화붓",
+        category: "붓",
+        source: "헤렌드",
+        url: "https://herendbrush.co.kr/",
+        rawPrice: 17250,
+        options: [
+          {
+            name: "10호",
+            rawPrice: 17250
+          },
+          {
+            name: "12호",
+            rawPrice: 22430
+          }
+        ]
+      },
+      {
+        id: "ire-prisma-72",
+        title: "프리즈마 유성색연필 72색 세트",
+        category: "색연필/드로잉",
+        source: "이레화방",
+        rawPrice: 92540,
+        productNo: "11414463",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=11414463"
+      },
+      {
+        id: "ire-prisma-single",
+        title: "프리즈마 유성색연필 낱색",
+        category: "색연필/드로잉",
+        source: "이레화방",
+        rawPrice: 1900,
+        options: [
+          "PC103 CERULEAN BLUE - SF1800042",
+          "PC105 COBALT TURGUOISE - SF1800041",
+          "PC109 PRUSSIAN GREEN - SF1800028",
+          "PC118 CADMIUM ORANGE HUE - SF1800027",
+          "PC120 SAP GREEN LIGHT HUE - SF1800030",
+          "PC122 PERMANENT RED - SF1800025",
+          "PC132 DIOXAZINE PURPLE HUE - SF1800046",
+          "PC133 COBALT BLUE HUE - SF1800043",
+          "PC140 EGGSHELL - SF1800044",
+          "PC195 POMEGRANATE - SF1800045",
+          "PC208 INDANTHRONE BLUE - SF1800026",
+          "PC289 GREY GREEN LIGHT - SF1800029",
+          "PC901 INDIGO BLUE - SF03332A",
+          "PC902 ULTRAMARINE - SF03333A",
+          "PC903 TRUE BLUE - SF03334A",
+          "PC904 CERULEAN - SF03335A",
+          "PC905 AQUAMARINE - SF03336A",
+          "PC906 COPENHANGEN - SF03337A",
+          "PC907 PEACOCK GREEN - SF03338A",
+          "PC908 DARK GREEN - SF03339A",
+          "PC909 GRASS GREEN - SF03340A",
+          "PC910 TRUE GREEN - SF03341A",
+          "PC911 OLIVE GREEN - SF03342A",
+          "PC912 APPLE GREEN - SF03343A",
+          "PC913 SPRING GREEN - SF03344A",
+          "PC914 CREAM - SF03345A",
+          "PC915 LEMON YELLOW - SF02680A",
+          "PC916 CANARY YELLOW - SF03346A",
+          "PC917 SUNBURST YELLOW - SF03347A",
+          "PC918 ORANGE - SF03348A",
+          "PC919 NON-Photo BLUE - SF03349A",
+          "PC920 Light green - SF02686A",
+          "PC921 pale VERMILION - SF03350A",
+          "PC922 POPPY RED - SF03351A",
+          "PC923 SCARLET LAKE - SF03352A",
+          "PC924 CRIMSON RED - SF03353A",
+          "PC925 CRIMSON - SF03742A",
+          "PC926 CARMINE RED - SF03354A",
+          "PC927 LIGHT PEACH - SF03355A",
+          "PC928 BLUSH PINK - SF03356A",
+          "PC929 PINK - SF03357A",
+          "PC930 MAGENTA - SF03358A",
+          "PC931 DARK PURPLE - SF03359A",
+          "PC932 VIOLET - SF03360A",
+          "PC933 VIOLET BLUE - SF03361A",
+          "PC935 BLACK - SF03363A",
+          "PC936 SLATE GRAY - SF02707A",
+          "PC937 TUSCAN RED - SF03364A",
+          "PC938 White - SF03365A",
+          "PC939 PEACH - SF03366A",
+          "PC940 SAND BX - SF03741A",
+          "PC941 LIGHT UMBER - SF03367A",
+          "PC942 YELLOW OCHRE - SF03368A",
+          "PC943 BURNT OCHRE - SF03369A",
+          "PC944 TERRA COTTA - SF03370A",
+          "PC945 SIENNA BROWN - SF03371A",
+          "PC946 DARK BROWN - SF03372A",
+          "PC947 DARK UMBER - SF03373A",
+          "PC948 SEPIA - SF03374A",
+          "PC949 METALLIC SILVER - SF03375A",
+          "PC950 METALLIC GOLD - SF03376A",
+          "PC988 MARINE Green - SF02771A",
+          "PC989 CHARTREUSE - SF03379A",
+          "PC992 LIGHT AQUA - SF03380A",
+          "PC993 HOT PINK - SF03381A",
+          "PC994 PROCESS RED - SF03382A",
+          "PC995 MULBERRY - SF03383A",
+          "PC996 BLACK GRAPE - SF03384A",
+          "PC997 BEIGE BX - SF02780A",
+          "PC1001 SALMON PINK - SF03385A",
+          "PC1002 YELLOWED ORANGE - SF03386A",
+          "PC1003 SPANISH ORANGE - SF03387A",
+          "PC1004 YELLOW CHARTREUSE - SF03388A",
+          "PC1005 LIMEPEEL - SF03389A",
+          "PC1006 PARROT GREEN - SF03390A",
+          "PC1007 IMPERIAL VIOLET - SF03391A",
+          "PC1008 PARMA VIOLET - SF03392A",
+          "PC1009 DAHLIA PURPLE - SF03393A",
+          "PC1011 DECO YELLOW - SF1800022A",
+          "PC1012 JASMINE - SF03396A",
+          "PC1013 DECO PEACH - SF1800023",
+          "PC1014 DECO PINK - SF1800024",
+          "PC1017 CLAY ROSE - SF03401A",
+          "PC1018 PINK ROSE - SF03402A",
+          "PC1019 ROSY BEIGE - SF03403A",
+          "PC1020 CELADON GREEN - SF03404A",
+          "PC1021 JADE GREEN - SF03405A",
+          "PC1022 MEDITERRANEAN BLUE - SF03406A",
+          "PC1023 CLOUD BLUE - SF03407A",
+          "PC1024 BLUE SLATE - SF03408A",
+          "PC1025 PERIWINKLE - SF03409A",
+          "PC1026 GREYED LAVENDER - SF03410A",
+          "PC1027 PEACOCK BLUE - SF03411A",
+          "PC1028 BRONZE - SF03412A",
+          "PC1029 MAHOGANY RED - SF03413A",
+          "PC1030 PASPBERRY - SF03414A",
+          "PC1031 HENNA - SF03415A",
+          "PC1032 PUMPKIN ORANGE - SF03416A",
+          "PC1033 MINERAL ORANGE - SF03417A",
+          "PC1034 GOLDENROD - SF03418A",
+          "PC1035 NEON YELLOW - SF1800047",
+          "PC1036 NEON ORANGE - SF1800048",
+          "PC1038 NEON PINK - SF1800049",
+          "PC1040 ELECTRIC BLUE - SF03424A",
+          "PC1050 WARM GREY10% - SF03434A",
+          "PC1051 WARM GREY20% - SF03435A",
+          "PC1052 WARM GREY30% - SF03436A",
+          "PC1054 WARM GREY50% - SF03437A",
+          "PC1056 WARM GREY70% - SF03438A",
+          "PC1058 WARM GREY90% - SF03439A",
+          "PC1059 COOL GREY10% - SF03440A",
+          "PC1060 COOL GREY20% - SF03441A",
+          "PC1061 COOL GREY30% - SF03442A",
+          "PC1063 COOL GREY50% - SF03443A",
+          "PC1065 COOL GREY70% - SF03444A",
+          "PC1067 COOL GREY90% - SF03445A",
+          "PC1068 FRENCH GREY10% - SF03446A",
+          "PC1069 FRENCH GREY20% - SF03447A",
+          "PC1070 FRENCH GREY30% - SF03448A",
+          "PC1072 FRENCH GREY50% - SF03449A",
+          "PC1074 FRENCH GREY70% - SF03450A",
+          "PC1076 FRENCH GREY90% - SF03451A",
+          "PC1078 BK CHERRY - SF03743A",
+          "PC1079 VIOLET LAKE - SF03744A",
+          "PC1080 BEIGE SIENNA - SF04140A",
+          "PC1081 CHESTNUT - SF04141A",
+          "PC1082 CHOCOLATE - SF04142A",
+          "PC1083 PUTTY BEIGE - SF04143A",
+          "PC1084 GINGER ROOT - SF04144A",
+          "PC1085 PEACH BEIGE - SF04145A",
+          "PC1086 SKY BLUE LIGHT - SF04146A",
+          "PC1087 POWDER BLUE - SF04147A",
+          "PC1088 MUTED TURQUOISE - SF04148A",
+          "PC1089 PALE SAGE - SF04149A",
+          "PC1090 KELP GREEN - SF04150A",
+          "PC1091 GREEN OCHRE - SF04151A",
+          "PC1092 NECTAR - SF51501A",
+          "PC1093 SEASHELL PINK - SF51502A",
+          "PC1094 SANDBAR BROWN - SF51503A",
+          "PC1095 BLACK RASPBERRY - SF51504A",
+          "PC1096 KELLY GREEN - SF51505A",
+          "PC1097 MOSS GREEN - SF51506A",
+          "PC1098 ARTICHOKE - SF51507A",
+          "PC1099 ESPRESSO - SF51508A",
+          "PC1100 CHINA BLUE - SF51509A",
+          "PC1101 DENIM BLUE - SF51510A",
+          "PC1102 BLUE LAKE - SF51512A",
+          "PC1103 CARIBBEAN SEA - SF51513A",
+          "PC1104 AMETHYST (기존956 LILAC 대체칼라) - SF2185325",
+          "PC1105 ORCHID (기존934 LAVENDER 대체칼라) - SF2185326"
+        ],
+        productNo: "2011",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=2011"
+      },
+      {
+        id: "ire-canvas-phoenix-10",
+        title: "피닉스 가왁구 캔버스 10호",
+        category: "캔버스/종이",
+        source: "이레화방",
+        productNo: "63251",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=63251",
+        rawPrice: 4620,
+        options: [
+          "F형-PHE5305NSP-10F",
+          "P형- PHE5305NSP-10P",
+          "M형- PHE5305NSP-10M"
+        ]
+      },
+      {
+        id: "ire-canvas-regular-10",
+        title: "이레아트 정식왁구 캔버스 10호",
+        category: "캔버스/종이",
+        source: "이레화방",
+        rawPrice: 16790,
+        options: [
+          {
+            name: "스기목+아사천",
+            rawPrice: 16790,
+            productNo: "102",
+            url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=102"
+          },
+          {
+            name: "스기목+면천",
+            rawPrice: 14940,
+            productNo: "47",
+            url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=47"
+          }
+        ],
+        productNo: "102/47",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=102"
+      },
+      {
+        id: "ire-sketchbook-4",
+        title: "4절 스케치북",
+        category: "캔버스/종이",
+        source: "이레화방",
+        productNo: "36391",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=36391",
+        rawPrice: 4600
+      },
+      {
+        id: "ire-drafting-brush",
+        title: "일반 제도비 - 나무 손잡이",
+        category: "기타",
+        source: "이레화방",
+        productNo: "57927",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=57927",
+        rawPrice: 2450
+      },
+      {
+        id: "ire-alpha-gold-poster-black",
+        title: "알파 골드 포스터칼라 낱색 100ml",
+        category: "포스터물감",
+        source: "이레화방",
+        rawPrice: 5690,
+        options: [
+          {
+            name: "검정",
+            rawPrice: 5690
+          }
+        ],
+        productNo: "37110",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=37110"
+      },
+      {
+        id: "ire-mission-design-matte-white",
+        title: "미젤로 미션 화이트클래스 디자인칼라 수채화물감 -100ml D700M 매트화이트",
+        category: "포스터물감",
+        source: "이레화방",
+        rawPrice: 10150,
+        productNo: "41450",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=41450"
+      },
+      {
+        id: "ire-shinhan-poster-mixing-white",
+        title: "신한 전문가용 포스터칼라 250ml 혼색용 믹싱화이트",
+        category: "포스터물감",
+        source: "이레화방",
+        rawPrice: 10740,
+        productNo: "3253",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=3253"
+      },
+      {
+        id: "ire-koring-kr3-50",
+        title: "16060 코링 KR-3-50 방안자 컷팅자 홈자 복합자",
+        category: "디자인도구",
+        source: "이레화방",
+        productNo: "33062",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=33062",
+        rawPrice: 9000
+      },
+      {
+        id: "ire-aluminum-pencil-holder-11",
+        title: "알루미늄 스틴 양면연필깍지 11cm 은색 낱개",
+        category: "디자인도구",
+        source: "이레화방",
+        rawPrice: 1900,
+        options: [
+          "NO.101 일반연필용 / 프리즈마색연필용 / 톰보우 모노J연필 / 모노100연필용",
+          "NO.102 파버카스텔 색연필용 / 연필파스텔용",
+          "NO.103 콘테연필용 / 홀베인 / 콘테연필콘테용"
+        ],
+        productNo: "5794",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=5794"
+      },
+      {
+        id: "ire-staedtler-100-pencil",
+        title: "21600 스테들러 100 최고급 연필 1타스 (12자루)",
+        category: "디자인도구",
+        source: "이레화방",
+        rawPrice: 12960,
+        options: [
+          {
+            name: "12B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "11B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "10B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "9B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "8B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "7B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "6B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "5B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "4B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "3B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "2B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "B 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "HB 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "F 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "H 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "2H 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "3H 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "4H 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "5H 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "6H 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "7H 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "8H 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "9H 1타스(12자루)",
+            rawPrice: 12960
+          },
+          {
+            name: "10H 1타스(12자루)",
+            rawPrice: 12960
+          }
+        ],
+        productNo: "2290",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=2290"
+      },
+      {
+        id: "ire-barbara-80rs-3",
+        title: "바바라 80RS 세필붓 둥근붓 낱자루",
+        category: "디자인도구",
+        source: "이레화방",
+        rawPrice: 2660,
+        options: [
+          {
+            name: "00호",
+            rawPrice: 2660
+          },
+          {
+            name: "0호",
+            rawPrice: 3040
+          },
+          {
+            name: "2호",
+            rawPrice: 3510
+          },
+          {
+            name: "4호",
+            rawPrice: 3800
+          },
+          {
+            name: "6호",
+            rawPrice: 4940
+          },
+          {
+            name: "8호",
+            rawPrice: 5220
+          }
+        ],
+        productNo: "4038",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=4038"
+      },
+      {
+        id: "ire-cutter-small",
+        title: "800 평화 201커터 오토락 커터칼 S 소형 9mm 낱개",
+        category: "기타",
+        source: "이레화방",
+        rawPrice: 430,
+        productNo: "1660",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=1660"
+      },
+      {
+        id: "ire-timer",
+        title: "10000 모닝글로리 비움 숫자패드 스톱워치 타이머",
+        category: "기타",
+        source: "이레화방",
+        productNo: "11378673",
+        rawPrice: 5700,
+        options: [
+          "화이트",
+          "블랙"
+        ]
+      },
+      {
+        id: "ire-brush-case",
+        title: "붓케이스",
+        category: "기타",
+        source: "이레화방",
+        productNo: "68385",
+        url: "https://www.irehb.co.kr/shop/shopdetail.html?branduid=68385",
+        rawPrice: 13890
+      },
+      {
+        id: "manual-double-clip",
+        title: "더블크립 대",
+        category: "기타",
+        source: "수동단가",
+        rawPrice: 200
+      },
+      {
+        id: "academy-apron",
+        title: "앞치마",
+        category: "기타",
+        source: "학원별도판매",
+        rawPrice: 25000
+      }
+    ];
+
+    const ignoreNames = [
+      "종이판넬", "수채화지", "켄트지", "단아미 세필붓", "동아 볼펜", "딱풀",
+      "원형캔버스", "디자인", "ㄴ정", "모나미 붓펜", "플러스펜", "메탈돌돌이",
+      "커터칼날", "뒤집개", "원형파레트", "화홍 700R"
+    ];
+
+    const state = {
+      products: mergeProductState(),
+      cart: JSON.parse(localStorage.getItem(storageKey("Cart")) || "[]"),
+      orders: migrateOrders(JSON.parse(localStorage.getItem(storageKey("Orders")) || "[]")),
+      settings: JSON.parse(localStorage.getItem(storageKey("Settings")) || "{}"),
+      selectedOrder: 0,
+      activeTab: "student",
+      adminUnlocked: sessionStorage.getItem("imageArtAdminUnlocked") === "true"
+    };
+    let lastExportUrl = "";
+
+    document.getElementById("monthLabel").textContent = monthText;
+    document.getElementById("campusLabel").textContent = campus.label;
+    document.getElementById("orderDate").value = todayText;
+    document.getElementById("deadlineDate").value = state.settings.deadlineDate || "";
+
+    function migrateOrders(orders) {
+      return orders.map((order, index) => ({
+        attendanceNo: order.attendanceNo || "",
+        academyAccount: order.academyAccount || campus.account,
+        campusId: order.campusId || campus.id,
+        campusLabel: order.campusLabel || campus.label,
+        smsStatus: order.smsStatus || "not_sent",
+        smsSentAt: order.smsSentAt || "",
+        updatedAt: order.updatedAt || order.date || todayText,
+        createdAt: order.createdAt || order.date || todayText,
+        ...order,
+        items: (order.items || []).map(item => ({ ...item })),
+        legacyKey: order.attendanceNo ? "" : `legacy-${index}`
+      }));
+    }
+
+    function mergeProductState() {
+      const saved = JSON.parse(localStorage.getItem("imageArtProductsV3") || "{}");
+      return baseProducts.map(product => ({
+        available: product.available !== false,
+        ...product,
+        ...(saved[product.id] || {})
+      }));
+    }
+
+    function applyProductOverrides(overrides = {}) {
+      state.products = baseProducts.map(product => ({
+        available: product.available !== false,
+        ...product,
+        ...(overrides[product.id] || {})
+      }));
+      localStorage.setItem("imageArtProductsV3", JSON.stringify(overrides));
+    }
+
+    async function loadCloudData() {
+      if (!useCloud()) {
+        setExportMessage("Google Apps Script URL이 아직 설정되지 않아 이 브라우저에 임시 저장됩니다.");
+        return;
+      }
+      try {
+        const data = await apiGet("bootstrap");
+        if (!data || !data.ok) throw new Error(data?.error || "데이터를 불러오지 못했습니다.");
+        state.orders = migrateOrders(data.orders || []);
+        state.settings = data.settings || {};
+        applyProductOverrides(data.products || {});
+        document.getElementById("deadlineDate").value = state.settings.deadlineDate || "";
+        saveCart();
+        localStorage.setItem(storageKey("Orders"), JSON.stringify(state.orders));
+        localStorage.setItem(storageKey("Settings"), JSON.stringify(state.settings));
+        setExportMessage("Google Sheets와 연결되었습니다.");
+      } catch (error) {
+        setExportMessage(`Google Sheets 연결 실패: ${xmlEscape(error.message || error)}<br>현재 브라우저 임시 저장값으로 표시합니다.`);
+      }
+    }
+
+    function saveProducts() {
+      const overrides = {};
+      state.products.forEach(product => {
+        const base = baseProducts.find(item => item.id === product.id);
+        if (!base || product.rawPrice !== base.rawPrice || product.available !== (base.available !== false)) {
+          overrides[product.id] = { rawPrice: product.rawPrice, available: product.available };
+        }
+      });
+      localStorage.setItem("imageArtProductsV3", JSON.stringify(overrides));
+      apiPost({ action: "saveProducts", products: overrides }).catch(() => {});
+    }
+
+    function saveCart() {
+      localStorage.setItem(storageKey("Cart"), JSON.stringify(state.cart));
+    }
+
+    function saveOrders() {
+      localStorage.setItem(storageKey("Orders"), JSON.stringify(state.orders));
+      apiPost({ action: "replaceOrders", orders: state.orders }).catch(() => {});
+    }
+
+    function saveSettings() {
+      localStorage.setItem(storageKey("Settings"), JSON.stringify(state.settings));
+      apiPost({ action: "saveSettings", settings: state.settings }).catch(() => {});
+    }
+
+    function deadlinePassed() {
+      return state.settings.deadlineDate && todayText > state.settings.deadlineDate;
+    }
+
+    function orderStatusText(order) {
+      if (order.smsStatus === "sent") return "문자 발송완료";
+      if (order.smsStatus === "needs_resend") return "재발송 필요";
+      return deadlinePassed() ? "수정마감" : "수정 가능";
+    }
+
+    function orderByAttendanceNo(attendanceNo) {
+      return state.orders.find(order => order.attendanceNo && order.attendanceNo === attendanceNo);
+    }
+
+    function mergeCartItems(baseItems, addedItems) {
+      const merged = baseItems.map(item => ({ ...item }));
+      addedItems.forEach(item => {
+        const existing = merged.find(target => target.key === item.key);
+        if (existing) existing.qty += item.qty;
+        else merged.push({ ...item });
+      });
+      return merged;
+    }
+
+    function optionName(option) {
+      return typeof option === "string" ? option : option.name;
+    }
+
+    function optionPrice(product, selectedOption) {
+      const found = (product.options || []).find(option => optionName(option) === selectedOption);
+      return typeof found === "object" && found.rawPrice ? found.rawPrice : product.rawPrice;
+    }
+
+    function selectedOptionData(product, selectedOption) {
+      return (product.options || []).find(option => optionName(option) === selectedOption);
+    }
+
+    function unitPrice(product, selectedOption) {
+      return roundDisplay(optionPrice(product, selectedOption));
+    }
+
+    function itemQty(item) {
+      return Number(item.qty || item.quantity || 1);
+    }
+
+    function itemUnitPrice(item) {
+      return Number(item.unitPrice || item.price || item.rawPrice || 0);
+    }
+
+    function itemAmount(item) {
+      return itemUnitPrice(item) * itemQty(item);
+    }
+
+    function billingTotal(items = state.cart) {
+      return Math.ceil(items.reduce((sum, item) => sum + itemAmount(item), 0) * 1.01 / 100) * 100;
+    }
+
+    function cartTotal(items = state.cart) {
+      return billingTotal(items);
+    }
+
+    function categories() {
+      return ["전체 분류", ...Array.from(new Set(state.products.map(product => product.category))).sort((a, b) => a.localeCompare(b, "ko"))];
+    }
+
+    function renderFilters() {
+      document.getElementById("categoryFilter").innerHTML = categories().map((item, index) => `<option value="${index ? item : "all"}">${item}</option>`).join("");
+    }
+
+    function renderCatalog() {
+      const search = document.getElementById("search").value.trim().toLowerCase();
+      const category = document.getElementById("categoryFilter").value;
+      const status = document.getElementById("statusFilter").value;
+      const filtered = state.products.filter(product => {
+        const optionText = (product.options || []).map(optionName).join(" ");
+        const text = `${product.title} ${product.category} ${optionText}`.toLowerCase();
+        return (!search || text.includes(search))
+          && (category === "all" || product.category === category)
+          && (status === "all" || (status === "available" ? product.available : !product.available));
+      });
+      document.getElementById("catalog").innerHTML = filtered.map(product => productCard(product, search)).join("") || `<div class="empty">검색 결과가 없습니다.</div>`;
+    }
+
+    function productCard(product, searchTerm = "") {
+      const options = product.options || [];
+      const selectedOption = options.length
+        ? (options.find(option => optionName(option).toLowerCase().includes(searchTerm)) || options[0])
+        : "";
+      const selectedOptionName = selectedOption ? optionName(selectedOption) : "";
+      const optionSelect = options.length ? `
+        <select data-option="${product.id}" ${product.available ? "" : "disabled"}>
+          ${options.map(option => `<option value="${optionName(option)}" ${optionName(option) === selectedOptionName ? "selected" : ""}>${optionName(option)}</option>`).join("")}
+        </select>
+      ` : "";
+      const displayPrice = unitPrice(product, selectedOptionName);
+      return `
+        <article class="product">
+          <div>
+            <h3>${product.title}</h3>
+            <div class="meta">
+              <span class="tag">${product.category}</span>
+              ${product.available ? `<span class="tag">주문 가능</span>` : `<span class="tag unavailable">현재 주문 불가</span>`}
+            </div>
+          </div>
+          <div>${optionSelect}</div>
+          <div class="price-row">
+            <div>
+              <div class="price" id="price-${product.id}">${won(displayPrice)}</div>
+              <div class="subtle">표시가</div>
+            </div>
+            <button class="primary" data-add="${product.id}" ${product.available ? "" : "disabled"}>담기</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderCart() {
+      document.getElementById("cartRows").innerHTML = state.cart.map((item, index) => `
+        <tr>
+          <td>${item.title}${item.option ? `<br><span class="subtle">${item.option}</span>` : ""}</td>
+          <td class="number"><input class="qty" type="number" min="1" value="${item.qty}" data-cart-qty="${index}"></td>
+          <td class="number">${won(item.unitPrice * item.qty)}</td>
+          <td class="number"><button data-remove="${index}">×</button></td>
+        </tr>
+      `).join("") || `<tr><td colspan="4"><div class="empty">장바구니가 비어 있습니다.</div></td></tr>`;
+      document.getElementById("cartTotal").textContent = won(cartTotal());
+    }
+
+    function renderOrders() {
+      document.getElementById("orderRows").innerHTML = state.orders.map((order, index) => `
+        <tr>
+          <td>${order.student}<br><span class="subtle">${order.attendanceNo ? `출결번호 ${order.attendanceNo}` : "출결번호 없음"} · ${order.campusLabel || campus.label}</span></td>
+          <td><span class="tag ${order.smsStatus === "needs_resend" ? "warn" : ""}">${orderStatusText(order)}</span></td>
+          <td>${order.date}</td>
+          <td class="number">${order.items.length}</td>
+          <td class="number">${won(cartTotal(order.items))}</td>
+          <td class="number"><button data-order="${index}">보기</button></td>
+        </tr>
+      `).join("") || `<tr><td colspan="6"><div class="empty">저장된 주문이 없습니다.</div></td></tr>`;
+      renderSelectedOrder();
+      renderPurchaseGroups();
+      renderDeadlineStatus();
+    }
+
+    function renderSelectedOrder() {
+      const order = state.orders[state.selectedOrder];
+      const sms = document.getElementById("smsText");
+      const receipt = document.getElementById("receipt");
+      if (!order) {
+        sms.value = "";
+        receipt.innerHTML = `<div class="empty">주문을 선택하면 명세표가 표시됩니다.</div>`;
+        return;
+      }
+      const total = cartTotal(order.items);
+      const listText = order.items.map(item => `${item.title}${item.option ? ` ${item.option}` : ""} ${item.qty}개`).join(", ");
+      sms.value = `이미지미술학원입니다.\n${order.student} 학생 ${order.month} 재료비는 ${won(total)}입니다.\n주문내역: ${listText}`;
+      receipt.innerHTML = `
+        <div class="receipt-title">
+          <strong>전공 기본재료 가격표</strong>
+          <span>출결번호: ${order.attendanceNo || "-"} · 학생명: ${order.student} · ${order.campusLabel || campus.label}</span>
+        </div>
+        <div class="top-actions" style="margin-bottom:10px">
+          ${order.smsStatus === "sent"
+            ? `<button class="danger" data-sms-unsent="${state.selectedOrder}">발송완료 취소</button>`
+            : `<button data-sms-sent="${state.selectedOrder}">문자 발송완료</button>`}
+        </div>
+        <table>
+          <thead>
+            <tr><th>품명</th><th>옵션</th><th class="number">수량</th><th class="number">단가</th><th class="number">금액</th></tr>
+          </thead>
+          <tbody>
+            ${order.items.map(item => `
+              <tr>
+                <td>${item.title}</td>
+                <td>${item.option || ""}</td>
+                <td class="number">${item.qty}</td>
+                <td class="number">${won(item.unitPrice)}</td>
+                <td class="number">${won(item.unitPrice * item.qty)}</td>
+              </tr>
+            `).join("")}
+            <tr><td colspan="4" class="number"><strong>청구금액</strong></td><td class="number"><strong>${won(total)}</strong></td></tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderPurchaseGroups() {
+      const items = state.orders.flatMap(order => order.items.map(item => ({ ...item, student: order.student })));
+      const html = items.length ? `
+        <div class="panel" style="box-shadow:none;margin-bottom:10px">
+          <table>
+            <thead><tr><th>상품</th><th>옵션</th><th class="number">수량</th><th>학생</th></tr></thead>
+            <tbody>
+              ${items.map(item => `
+                <tr>
+                  <td>${item.title}<br><span class="subtle">${item.productNo ? `관리번호 ${item.productNo}` : ""}</span></td>
+                  <td>${item.option || ""}</td>
+                  <td class="number">${item.qty}</td>
+                  <td>${item.student}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      ` : "";
+      document.getElementById("purchaseGroups").innerHTML = html || `<div class="empty">저장된 주문이 없습니다.</div>`;
+    }
+
+    function renderProductAdmin() {
+      document.getElementById("productAdminRows").innerHTML = state.products.map(product => `
+        <tr>
+          <td>
+            ${product.title}<br>
+            <span class="subtle">${product.productNo ? `상품번호 ${product.productNo}` : "관리 품목"}</span>
+          </td>
+          <td class="number"><input class="qty" type="number" min="0" step="10" value="${product.rawPrice}" data-price="${product.id}"></td>
+          <td>
+            <select data-available="${product.id}">
+              <option value="true" ${product.available ? "selected" : ""}>주문 가능</option>
+              <option value="false" ${!product.available ? "selected" : ""}>현재 주문 불가</option>
+            </select>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderDeadlineStatus() {
+      const status = document.getElementById("deadlineStatus");
+      if (!state.settings.deadlineDate) {
+        status.textContent = "수정 마감일이 아직 지정되지 않았습니다.";
+        return;
+      }
+      status.textContent = deadlinePassed()
+        ? `수정 마감됨: ${state.settings.deadlineDate}`
+        : `수정 가능: ${state.settings.deadlineDate}까지`;
+    }
+
+    function renderAll() {
+      renderCatalog();
+      renderCart();
+      renderOrders();
+      renderProductAdmin();
+      document.getElementById("adminArea").classList.toggle("hidden", state.activeTab !== "admin");
+    }
+
+    function activateTab(tabName) {
+      state.activeTab = tabName;
+      document.querySelectorAll("[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabName));
+      renderAll();
+    }
+
+    function openAdminGate() {
+      document.getElementById("adminGate").classList.add("open");
+      document.getElementById("adminPasswordInput").value = "";
+      document.getElementById("adminPasswordMessage").textContent = "";
+      document.getElementById("adminPasswordInput").focus();
+    }
+
+    function closeAdminGate() {
+      document.getElementById("adminGate").classList.remove("open");
+    }
+
+    function submitAdminPassword() {
+      const input = document.getElementById("adminPasswordInput");
+      const message = document.getElementById("adminPasswordMessage");
+      if (input.value !== adminPassword) {
+        message.textContent = "비밀번호가 맞지 않습니다.";
+        input.select();
+        return;
+      }
+      state.adminUnlocked = true;
+      sessionStorage.setItem("imageArtAdminUnlocked", "true");
+      closeAdminGate();
+      activateTab("admin");
+    }
+
+    function logoutAdmin() {
+      state.adminUnlocked = false;
+      sessionStorage.removeItem("imageArtAdminUnlocked");
+      activateTab("student");
+      document.getElementById("saveMessage").textContent = "관리자에서 로그아웃했습니다.";
+    }
+
+    function addToCart(productId) {
+      const product = state.products.find(item => item.id === productId);
+      if (!product || !product.available) return;
+      const optionElement = document.querySelector(`[data-option="${productId}"]`);
+      const option = optionElement ? optionElement.value : "";
+      const optionData = selectedOptionData(product, option);
+      const price = unitPrice(product, option);
+      const key = `${productId}::${option}`;
+      const existing = state.cart.find(item => item.key === key);
+      if (existing) existing.qty += 1;
+      else {
+        state.cart.push({
+          key,
+          productId,
+          title: product.title,
+          option,
+          qty: 1,
+          unitPrice: price,
+          rawPrice: optionPrice(product, option),
+          source: product.source,
+          productNo: (typeof optionData === "object" && optionData.productNo) || product.productNo || "",
+          url: (typeof optionData === "object" && optionData.url) || product.url || ""
+        });
+      }
+      saveCart();
+      renderCart();
+    }
+
+    function saveOrder() {
+      const attendanceNo = document.getElementById("attendanceNo").value.trim();
+      const student = document.getElementById("studentName").value.trim();
+      const academyAccount = campus.account;
+      const mode = document.getElementById("orderMode").value;
+      const message = document.getElementById("saveMessage");
+      if (deadlinePassed()) {
+        message.textContent = "수정 마감일이 지나 학생 화면에서는 저장할 수 없습니다. 학원에 문의해주세요.";
+        return;
+      }
+      if (!attendanceNo) {
+        message.textContent = "출결번호를 입력해주세요.";
+        document.getElementById("attendanceNo").focus();
+        return;
+      }
+      if (!student) {
+        message.textContent = "학생명을 입력해주세요.";
+        document.getElementById("studentName").focus();
+        return;
+      }
+      if (!state.cart.length) {
+        message.textContent = "장바구니에 담긴 품목이 없습니다.";
+        return;
+      }
+      const existing = orderByAttendanceNo(attendanceNo);
+      const nowText = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+      if (existing) {
+        if (mode === "new") {
+          message.textContent = "이미 같은 출결번호 주문이 있습니다. 기존 주문에 추가하거나 기존 주문 수정을 선택해주세요.";
+          return;
+        }
+        existing.student = student;
+        existing.academyAccount = academyAccount;
+        existing.campusId = campus.id;
+        existing.campusLabel = campus.label;
+        existing.date = document.getElementById("orderDate").value || todayText;
+        existing.month = monthText.replace(" 신청", "");
+        existing.items = mode === "replace"
+          ? state.cart.map(item => ({ ...item }))
+          : mergeCartItems(existing.items || [], state.cart);
+        existing.updatedAt = nowText;
+        if (existing.smsStatus === "sent") existing.smsStatus = "needs_resend";
+        state.selectedOrder = state.orders.indexOf(existing);
+        message.textContent = mode === "replace" ? "기존 주문을 수정했습니다." : "기존 주문에 추가했습니다.";
+      } else {
+        if (mode !== "new") {
+          message.textContent = "저장된 기존 주문이 없습니다. 새 주문 작성으로 저장해주세요.";
+          return;
+        }
+        state.orders.unshift({
+          attendanceNo,
+          student,
+          academyAccount,
+          campusId: campus.id,
+          campusLabel: campus.label,
+          date: document.getElementById("orderDate").value || todayText,
+          month: monthText.replace(" 신청", ""),
+          createdAt: nowText,
+          updatedAt: nowText,
+          smsStatus: "not_sent",
+          smsSentAt: "",
+          items: state.cart.map(item => ({ ...item }))
+        });
+        state.selectedOrder = 0;
+        message.textContent = "주문이 저장되었습니다.";
+      }
+      state.cart = [];
+      saveCart();
+      saveOrders();
+      renderAll();
+    }
+
+    function loadExistingOrder() {
+      const attendanceNo = document.getElementById("attendanceNo").value.trim();
+      const message = document.getElementById("saveMessage");
+      if (!attendanceNo) {
+        message.textContent = "출결번호를 먼저 입력해주세요.";
+        return;
+      }
+      const order = orderByAttendanceNo(attendanceNo);
+      if (!order) {
+        message.textContent = "해당 출결번호로 저장된 주문이 없습니다.";
+        return;
+      }
+      if (deadlinePassed()) {
+        message.textContent = "수정 마감일이 지나 학생 화면에서는 불러올 수 없습니다.";
+        return;
+      }
+      document.getElementById("studentName").value = order.student || "";
+      document.getElementById("orderDate").value = order.date || todayText;
+      document.getElementById("orderMode").value = "replace";
+      state.cart = (order.items || []).map(item => ({ ...item }));
+      saveCart();
+      message.textContent = "기존 주문을 불러왔습니다. 수정 후 저장하면 기존 주문이 교체됩니다.";
+      renderCart();
+    }
+
+    function exportOrders() {
+      const header = ["출결번호", "학생명", "PC구분", "학원구분", "문자상태", "주문일", "최종수정", "상품명", "옵션", "수량", "단가", "금액", "관리상품번호"];
+      const rows = state.orders.flatMap(order => order.items.map(item => [
+        order.attendanceNo, order.student, order.campusLabel || campus.label, order.academyAccount || campus.account, orderStatusText(order), order.date, order.updatedAt, item.title, item.option, itemQty(item), itemUnitPrice(item), itemAmount(item), item.productNo
+      ]));
+      const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell || "").replaceAll('"', '""')}"`).join(",")).join("\n");
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+      downloadBlob(blob, "image-art-orders.csv");
+    }
+
+    function setExportMessage(html) {
+      const message = document.getElementById("exportMessage");
+      message.classList.add("active");
+      message.innerHTML = html;
+    }
+
+    function downloadBlob(blob, filename) {
+      if (lastExportUrl) URL.revokeObjectURL(lastExportUrl);
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      lastExportUrl = url;
+      link.href = url;
+      link.download = filename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return { url, filename };
+    }
+
+    function showExportLink(url, filename) {
+      setExportMessage(`다운로드가 자동으로 시작되지 않으면 <a href="${url}" download="${filename}">${filename} 저장하기</a>를 눌러주세요.`);
+    }
+
+    function xmlEscape(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function columnName(index) {
+      let name = "";
+      while (index > 0) {
+        const mod = (index - 1) % 26;
+        name = String.fromCharCode(65 + mod) + name;
+        index = Math.floor((index - mod) / 26);
+      }
+      return name;
+    }
+
+    function smsExportRows() {
+      const sheetName = `${String(seoulParts.year).slice(2)}.${seoulParts.month}`;
+      const rows = [
+        ["재료구매표", "", "", "", "", "", "", "", "주문날짜", sheetName, "", "", "", "", "", "", "", "", "총계", "납부일"],
+        ["no.", "이름", "학원구분", "품목1", "품목2", "품목3", "품목4", "품목5", "품목6", "품목7", "금액1", "금액2", "금액3", "금액4", "금액5", "금액6", "금액7", "", "총계", "납부일"],
+        ["", "", "본관/다빈치 선택", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+      ];
+      state.orders
+        .slice()
+        .sort((a, b) => Number(a.attendanceNo || 0) - Number(b.attendanceNo || 0) || String(a.student).localeCompare(String(b.student), "ko"))
+        .forEach(order => {
+          const lineItems = (order.items || []).map(item => ({
+            name: `${item.title}${item.option ? ` ${item.option}` : ""}${itemQty(item) > 1 ? ` ${itemQty(item)}개` : ""}`,
+            amount: itemAmount(item)
+          }));
+          let visibleItems = lineItems.slice(0, 7);
+          if (lineItems.length > 7) {
+            const rest = lineItems.slice(6);
+            visibleItems = [
+              ...lineItems.slice(0, 6),
+              {
+                name: `${rest[0].name} 외 ${rest.length - 1}건`,
+                amount: rest.reduce((sum, item) => sum + item.amount, 0)
+              }
+            ];
+          }
+          const items = Array.from({ length: 7 }, (_, index) => visibleItems[index]?.name || "");
+          const amounts = Array.from({ length: 8 }, (_, index) => visibleItems[index]?.amount || "");
+          const attendance = /^\d+$/.test(String(order.attendanceNo || "")) ? Number(order.attendanceNo) : order.attendanceNo;
+          rows.push([
+            attendance,
+            order.student,
+            order.academyAccount || campus.account,
+            ...items,
+            ...amounts,
+            cartTotal(order.items),
+            ""
+          ]);
+        });
+      return { sheetName, rows };
+    }
+
+    function buildSmsCsvBlob() {
+      return new Blob(["\ufeff" + buildSmsCsvText()], { type: "text/csv;charset=utf-8" });
+    }
+
+    function buildSmsCsvText() {
+      const { rows } = smsExportRows();
+      return rows
+        .map(row => row.map(cell => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(","))
+        .join("\n");
+    }
+
+    async function exportSmsXlsx() {
+      if (!state.orders.length) {
+        setExportMessage("내보낼 주문이 없습니다. 학생 주문을 먼저 저장한 뒤 다시 눌러주세요.");
+        return;
+      }
+      const invalid = state.orders.filter(order => !/^\d+$/.test(String(order.attendanceNo || "")));
+      if (invalid.length) {
+        setExportMessage("출결번호는 숫자여야 문자발송 CSV에서 인식됩니다. 출결번호를 확인해주세요.");
+        return;
+      }
+      const filename = `${seoulParts.year}-${seoulParts.month}_${campus.label}_학생재료구매목록.csv`;
+      const csvText = buildSmsCsvText();
+      const csvWithBom = "\ufeff" + csvText;
+      const blob = new Blob([csvWithBom], { type: "text/csv;charset=utf-8" });
+      const { rows } = smsExportRows();
+      const preview = rows.slice(0, 8).map(row => row.join(" | ")).join("\n");
+      setExportMessage(`문자발송 CSV를 만들었습니다. 주문 ${state.orders.length}명, 전체 ${rows.length}줄입니다.<textarea readonly>${xmlEscape(preview)}</textarea>`);
+      try {
+        const response = await fetch("/save-csv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename, text: csvText })
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const emailText = result.email?.enabled
+            ? (result.email.sent ? `메일 전송 완료: ${xmlEscape((result.email.to || []).join(", "))}` : `메일 전송 실패: ${xmlEscape(result.email.error || "설정을 확인해주세요.")}`)
+            : "메일 자동전송 꺼짐";
+          setExportMessage(`${filename} 저장 완료: ${xmlEscape(result.path)}<br>${emailText}<textarea readonly>${xmlEscape(preview)}</textarea>`);
+          return;
+        }
+      } catch (error) {
+        // Static file servers do not support direct saving; fall back to browser save.
+      }
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{ description: "CSV 파일", accept: { "text/csv": [".csv"] } }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(csvWithBom);
+          await writable.close();
+          setExportMessage(`${filename} 저장이 완료되었습니다. 주문 ${state.orders.length}명, 전체 ${rows.length}줄입니다.<textarea readonly>${xmlEscape(preview)}</textarea>`);
+          return;
+        } catch (error) {
+          if (error.name === "AbortError") {
+            setExportMessage("CSV 저장을 취소했습니다.");
+            return;
+          }
+        }
+      }
+      const file = downloadBlob(blob, filename);
+      showExportLink(file.url, file.filename);
+      document.getElementById("saveMessage").textContent = "문자발송 CSV 다운로드를 시작했습니다. 다운로드 폴더 또는 상단 저장 링크를 확인해주세요.";
+    }
+
+    async function handleSmsExportClick() {
+      try {
+        await exportSmsXlsx();
+      } catch (error) {
+        console.error(error);
+        setExportMessage(`문자발송 CSV를 만드는 중 문제가 생겼습니다: ${xmlEscape(error.message || error)}`);
+      }
+    }
+
+    document.addEventListener("click", event => {
+      const tabName = event.target.dataset.tab;
+      if (tabName) {
+        if (tabName === "admin" && !state.adminUnlocked) {
+          openAdminGate();
+          return;
+        }
+        activateTab(tabName);
+      }
+      if (event.target.dataset.add) addToCart(event.target.dataset.add);
+      if (event.target.dataset.remove !== undefined) {
+        state.cart.splice(Number(event.target.dataset.remove), 1);
+        saveCart();
+        renderCart();
+      }
+      if (event.target.dataset.order !== undefined) {
+        state.selectedOrder = Number(event.target.dataset.order);
+        renderSelectedOrder();
+      }
+      if (event.target.dataset.smsSent !== undefined) {
+        const order = state.orders[Number(event.target.dataset.smsSent)];
+        if (!order) return;
+        order.smsStatus = "sent";
+        order.smsSentAt = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+        saveOrders();
+        renderOrders();
+      }
+      if (event.target.dataset.smsUnsent !== undefined) {
+        const order = state.orders[Number(event.target.dataset.smsUnsent)];
+        if (!order) return;
+        order.smsStatus = "not_sent";
+        order.smsSentAt = "";
+        saveOrders();
+        renderOrders();
+      }
+    });
+
+    document.addEventListener("input", event => {
+      if (["search"].includes(event.target.id)) renderCatalog();
+      if (event.target.dataset.cartQty !== undefined) {
+        const index = Number(event.target.dataset.cartQty);
+        state.cart[index].qty = Math.max(1, Number(event.target.value) || 1);
+        saveCart();
+        renderCart();
+      }
+      if (event.target.dataset.price) {
+        const product = state.products.find(item => item.id === event.target.dataset.price);
+        product.rawPrice = Math.max(0, Number(event.target.value) || 0);
+        saveProducts();
+        renderCatalog();
+      }
+    });
+
+    document.addEventListener("change", event => {
+      if (["categoryFilter", "statusFilter"].includes(event.target.id)) renderCatalog();
+      if (event.target.dataset.option) {
+        const product = state.products.find(item => item.id === event.target.dataset.option);
+        document.getElementById(`price-${product.id}`).textContent = won(unitPrice(product, event.target.value));
+      }
+      if (event.target.dataset.available) {
+        const product = state.products.find(item => item.id === event.target.dataset.available);
+        product.available = event.target.value === "true";
+        saveProducts();
+        renderCatalog();
+        renderProductAdmin();
+      }
+      if (event.target.id === "deadlineDate") {
+        state.settings.deadlineDate = event.target.value;
+        saveSettings();
+        renderDeadlineStatus();
+        renderOrders();
+      }
+    });
+
+    document.getElementById("saveOrder").addEventListener("click", saveOrder);
+    document.getElementById("loadExistingOrder").addEventListener("click", loadExistingOrder);
+    document.getElementById("adminPasswordSubmit").addEventListener("click", submitAdminPassword);
+    document.getElementById("adminPasswordCancel").addEventListener("click", closeAdminGate);
+    document.getElementById("adminLogout").addEventListener("click", logoutAdmin);
+    document.getElementById("adminPasswordInput").addEventListener("keydown", event => {
+      if (event.key === "Enter") submitAdminPassword();
+    });
+    document.getElementById("exportOrders").addEventListener("click", exportOrders);
+    document.getElementById("exportSmsXlsx").addEventListener("click", handleSmsExportClick);
+    document.getElementById("printReceipt").addEventListener("click", () => window.print());
+    document.getElementById("resetApp").addEventListener("click", () => {
+      if (!confirm("이번 달 주문을 비우고 다음 달 주문을 시작할까요? 진행 전 주문 CSV와 문자발송 CSV를 저장했는지 확인해주세요. 상품과 가격표는 유지됩니다.")) return;
+      state.cart = [];
+      state.orders = [];
+      state.settings.deadlineDate = "";
+      document.getElementById("deadlineDate").value = "";
+      localStorage.removeItem(storageKey("Cart"));
+      localStorage.removeItem(storageKey("Orders"));
+      apiPost({ action: "resetOrders" }).catch(() => {});
+      saveSettings();
+      renderAll();
+    });
+
+    async function initApp() {
+      renderFilters();
+      renderAll();
+      await loadCloudData();
+      renderFilters();
+      renderAll();
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
