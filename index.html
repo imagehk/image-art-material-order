@@ -529,7 +529,7 @@
         </div>
         <div class="student-grid">
           <div class="campus-box" id="campusLabel"></div>
-          <input id="orderDate" class="required-field" type="date">
+          <div class="campus-box" id="orderDateLabel"></div>
         </div>
         <div class="student-grid">
           <select id="orderMode" class="required-field">
@@ -584,6 +584,16 @@
         <button id="adminLogout">관리자 로그아웃</button>
       </div>
       <div class="admin-tools">
+        <label>
+          <span class="subtle">CSV 범위</span>
+          <select id="exportCampusFilter">
+            <option value="all">전체 캠퍼스</option>
+            <option value="painting">회화반</option>
+            <option value="design">디자인반</option>
+            <option value="davinci">다빈치관</option>
+            <option value="yongsan">용산캠퍼스</option>
+          </select>
+        </label>
         <label>
           <span class="subtle">수정 마감일</span>
           <input id="deadlineDate" type="date">
@@ -673,12 +683,13 @@
       painting: { id: "painting", label: "회화반", account: "본관" },
       design: { id: "design", label: "디자인반", account: "본관" },
       davinci: { id: "davinci", label: "다빈치관", account: "다빈치" },
-      yongsan: { id: "yongsan", label: "용산캠퍼스", account: "용산캠" }
+      yongsan: { id: "yongsan", label: "용산캠퍼스", account: "용산캠" },
+      all: { id: "all", label: "통합관리자", account: "" }
     };
     const campusParam = new URLSearchParams(window.location.search).get("campus");
     const savedCampusId = localStorage.getItem("imageArtCampusV3");
     const campus = campusConfigs[campusParam] || campusConfigs[savedCampusId] || campusConfigs.painting;
-    localStorage.setItem("imageArtCampusV3", campus.id);
+    if (campus.id !== "all") localStorage.setItem("imageArtCampusV3", campus.id);
     const storageKey = name => `imageArt${name}V3_${campus.id}`;
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqNanBl77-1EI0ryiZ5BwJHV_HIud8Azr9fqmiIo5aVORvEVUrPoaKgn27XrxploXWPA/exec"; // Google Apps Script 배포 URL을 여기에 붙여넣으세요.
     const useCloud = () => APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("https://");
@@ -719,6 +730,10 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ campus: campus.id, ...payload })
       });
+    }
+
+    function isIntegratedAdmin() {
+      return campus.id === "all";
     }
 
     const baseProducts = [
@@ -2556,7 +2571,7 @@
 
     document.getElementById("monthLabel").textContent = monthText;
     document.getElementById("campusLabel").textContent = campus.label;
-    document.getElementById("orderDate").value = todayText;
+    document.getElementById("orderDateLabel").textContent = `주문일 ${todayText}`;
     document.getElementById("deadlineDate").value = state.settings.deadlineDate || "";
 
     function migrateOrders(orders) {
@@ -2632,7 +2647,7 @@
 
     function saveOrders() {
       localStorage.setItem(storageKey("Orders"), JSON.stringify(state.orders));
-      apiPost({ action: "replaceOrders", orders: state.orders }).catch(() => {});
+      apiPost({ action: isIntegratedAdmin() ? "replaceAllOrders" : "replaceOrders", orders: state.orders }).catch(() => {});
     }
 
     function saveSettings() {
@@ -3044,7 +3059,7 @@
         existing.academyAccount = academyAccount;
         existing.campusId = campus.id;
         existing.campusLabel = campus.label;
-        existing.date = document.getElementById("orderDate").value || todayText;
+        existing.date = existing.date || todayText;
         existing.month = monthText.replace(" 신청", "");
         existing.items = mode === "replace"
           ? state.cart.map(item => ({ ...item }))
@@ -3064,7 +3079,7 @@
           academyAccount,
           campusId: campus.id,
           campusLabel: campus.label,
-          date: document.getElementById("orderDate").value || todayText,
+          date: todayText,
           month: monthText.replace(" 신청", ""),
           createdAt: nowText,
           updatedAt: nowText,
@@ -3155,7 +3170,7 @@
         return;
       }
       document.getElementById("studentName").value = order.student || "";
-      document.getElementById("orderDate").value = order.date || todayText;
+      document.getElementById("orderDateLabel").textContent = `주문일 ${order.date || todayText}`;
       document.getElementById("orderMode").value = "replace";
       state.cart = (order.items || []).map(item => ({ ...item }));
       saveCart();
@@ -3163,14 +3178,30 @@
       renderCart();
     }
 
+    function selectedExportCampus() {
+      const selector = document.getElementById("exportCampusFilter");
+      return selector ? selector.value : campus.id;
+    }
+
+    function campusLabelForExport(value = selectedExportCampus()) {
+      if (value === "all") return "전체캠퍼스";
+      return campusConfigs[value]?.label || campus.label;
+    }
+
+    function exportTargetOrders() {
+      const selected = selectedExportCampus();
+      return state.orders.filter(order => selected === "all" || order.campusId === selected);
+    }
+
     function exportOrders() {
+      const targetOrders = exportTargetOrders();
       const header = ["출결번호", "학생명", "PC구분", "학원구분", "문자상태", "주문일", "최종수정", "상품명", "옵션", "수량", "단가", "금액", "관리상품번호"];
-      const rows = state.orders.flatMap(order => order.items.map(item => [
+      const rows = targetOrders.flatMap(order => order.items.map(item => [
         order.attendanceNo, order.student, order.campusLabel || campus.label, accountForOrder(order), orderStatusText(order), order.date, order.updatedAt, item.title, item.option, itemQty(item), itemUnitPrice(item), itemAmount(item), item.productNo
       ]));
       const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell || "").replaceAll('"', '""')}"`).join(",")).join("\n");
       const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
-      downloadBlob(blob, "image-art-orders.csv");
+      downloadBlob(blob, `${campusLabelForExport()}_주문목록.csv`);
     }
 
     function setExportMessage(html) {
@@ -3222,7 +3253,7 @@
         ["no.", "이름", "학원구분", "품목1", "품목2", "품목3", "품목4", "품목5", "품목6", "품목7", "금액1", "금액2", "금액3", "금액4", "금액5", "금액6", "금액7", "", "총계", "납부일"],
         ["", "", "본관/다빈치/용산캠 선택", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
       ];
-      state.orders
+      exportTargetOrders()
         .slice()
         .sort((a, b) => Number(a.attendanceNo || 0) - Number(b.attendanceNo || 0) || String(a.student).localeCompare(String(b.student), "ko"))
         .forEach(order => {
@@ -3269,22 +3300,23 @@
     }
 
     async function exportSmsXlsx() {
-      if (!state.orders.length) {
-        setExportMessage("내보낼 주문이 없습니다. 학생 주문을 먼저 저장한 뒤 다시 눌러주세요.");
+      const targetOrders = exportTargetOrders();
+      if (!targetOrders.length) {
+        setExportMessage("선택한 범위에 내보낼 주문이 없습니다.");
         return;
       }
-      const invalid = state.orders.filter(order => !/^\d+$/.test(String(order.attendanceNo || "")));
+      const invalid = targetOrders.filter(order => !/^\d+$/.test(String(order.attendanceNo || "")));
       if (invalid.length) {
         setExportMessage("출결번호는 숫자여야 문자발송 CSV에서 인식됩니다. 출결번호를 확인해주세요.");
         return;
       }
-      const filename = `${seoulParts.year}-${seoulParts.month}_${campus.label}_학생재료구매목록.csv`;
+      const filename = `${seoulParts.year}-${seoulParts.month}_${campusLabelForExport()}_학생재료구매목록.csv`;
       const csvText = buildSmsCsvText();
       const csvWithBom = "\ufeff" + csvText;
       const blob = new Blob([csvWithBom], { type: "text/csv;charset=utf-8" });
       const { rows } = smsExportRows();
       const preview = rows.slice(0, 8).map(row => row.join(" | ")).join("\n");
-      setExportMessage(`문자발송 CSV를 만들었습니다. 주문 ${state.orders.length}명, 전체 ${rows.length}줄입니다.<textarea readonly>${xmlEscape(preview)}</textarea>`);
+      setExportMessage(`문자발송 CSV를 만들었습니다. 주문 ${targetOrders.length}명, 전체 ${rows.length}줄입니다.<textarea readonly>${xmlEscape(preview)}</textarea>`);
       try {
         const response = await fetch("/save-csv", {
           method: "POST",
@@ -3311,7 +3343,7 @@
           const writable = await handle.createWritable();
           await writable.write(csvWithBom);
           await writable.close();
-          setExportMessage(`${filename} 저장이 완료되었습니다. 주문 ${state.orders.length}명, 전체 ${rows.length}줄입니다.<textarea readonly>${xmlEscape(preview)}</textarea>`);
+          setExportMessage(`${filename} 저장이 완료되었습니다. 주문 ${targetOrders.length}명, 전체 ${rows.length}줄입니다.<textarea readonly>${xmlEscape(preview)}</textarea>`);
           return;
         } catch (error) {
           if (error.name === "AbortError") {
@@ -3421,6 +3453,7 @@
     document.getElementById("adminPasswordInput").addEventListener("keydown", event => {
       if (event.key === "Enter") submitAdminPassword();
     });
+    document.getElementById("exportCampusFilter").addEventListener("change", () => setExportMessage(`${campusLabelForExport()} 기준으로 CSV를 생성합니다.`));
     document.getElementById("exportOrders").addEventListener("click", exportOrders);
     document.getElementById("exportSmsXlsx").addEventListener("click", handleSmsExportClick);
     document.getElementById("printReceipt").addEventListener("click", () => window.print());
@@ -3432,7 +3465,7 @@
       document.getElementById("deadlineDate").value = "";
       localStorage.removeItem(storageKey("Cart"));
       localStorage.removeItem(storageKey("Orders"));
-      apiPost({ action: "resetOrders" }).catch(() => {});
+      apiPost({ action: isIntegratedAdmin() ? "replaceAllOrders" : "resetOrders", orders: [] }).catch(() => {});
       saveSettings();
       renderAll();
     });
