@@ -110,6 +110,13 @@
     }
 
     button.primary:hover { background: var(--accent-dark); }
+    button.kakao {
+      background: #fee500;
+      border-color: #fee500;
+      color: #3c1e1e;
+      box-shadow: 0 8px 18px rgba(60, 30, 30, .12);
+    }
+    button.kakao:hover { background: #f6dc00; }
     button.danger { color: var(--bad); border-color: #e6b9b9; }
     button:disabled {
       cursor: not-allowed;
@@ -137,6 +144,15 @@
     .required-field::placeholder {
       color: #274278;
       opacity: 1;
+    }
+
+    #saveMessage:not(:empty) {
+      padding: 10px 12px;
+      border: 1px solid var(--accent-line);
+      border-radius: 8px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-weight: 800;
     }
 
     textarea {
@@ -282,6 +298,24 @@
       color: var(--warn);
       background: #fff7e8;
       border-color: #efd4a6;
+    }
+
+    .admin-price-input {
+      width: 96px;
+      min-height: 34px;
+      padding: 6px 8px;
+      text-align: right;
+      font-weight: 800;
+    }
+
+    .admin-warning {
+      margin: 0 0 10px;
+      padding: 10px 12px;
+      border: 1px solid #efd4a6;
+      border-radius: 8px;
+      background: #fff7e8;
+      color: #8a5a00;
+      font-weight: 800;
     }
 
     .price-row {
@@ -570,7 +604,10 @@
           <button class="primary" id="saveOrder">주문 저장</button>
         </div>
         <p class="subtle" id="saveMessage" role="status"></p>
-        <p class="subtle">학생 화면 가격은 100원 단위로 올림 표시합니다. 상품번호와 구매 URL은 관리자 화면에만 표시됩니다.</p>
+        <div class="top-actions" style="margin-top:10px">
+          <button id="kakaoHelp" class="kakao" type="button">카카오채널 문의하기</button>
+        </div>
+        <p class="subtle">주문 오류나 목록에 없는 품목은 카카오채널로 문의해주세요.</p>
       </section>
     </aside>
 
@@ -679,6 +716,7 @@
     const won = value => `${Math.round(value || 0).toLocaleString("ko-KR")}원`;
     const roundDisplay = value => Math.ceil((Number(value) || 0) / 100) * 100;
     const adminPassword = "03070307";
+    const KAKAO_CHAT_URL = "https://pf.kakao.com/_xixgxkun/chat";
     const campusConfigs = {
       painting: { id: "painting", label: "회화반", account: "본관" },
       design: { id: "design", label: "디자인반", account: "본관" },
@@ -2714,6 +2752,16 @@
       return Number(cleaned || 0);
     }
 
+    function isManualItem(item) {
+      return item && (item.productId === "manual" || item.source === "직접 입력");
+    }
+
+    function unresolvedManualItems(orders = state.orders) {
+      return orders.flatMap(order => (order.items || [])
+        .filter(item => isManualItem(item) && itemAmount(item) <= 0)
+        .map(item => ({ order, item })));
+    }
+
     function itemQty(item) {
       return Number(item.qty || item.quantity || 1);
     }
@@ -2809,7 +2857,10 @@
       document.getElementById("orderRows").innerHTML = state.orders.map((order, index) => `
         <tr>
           <td>${order.student}<br><span class="subtle">${order.attendanceNo ? `출결번호 ${order.attendanceNo}` : "출결번호 없음"} · ${order.campusLabel || campus.label}</span></td>
-          <td><span class="tag ${order.smsStatus === "needs_resend" ? "warn" : ""}">${orderStatusText(order)}</span></td>
+          <td>
+            <span class="tag ${order.smsStatus === "needs_resend" ? "warn" : ""}">${orderStatusText(order)}</span>
+            ${unresolvedManualItems([order]).length ? `<br><span class="tag warn">직접 입력 확인 필요</span>` : ""}
+          </td>
           <td>${order.date}</td>
           <td class="number">${order.items.length}</td>
           <td class="number">${won(cartTotal(order.items))}</td>
@@ -2831,6 +2882,7 @@
         return;
       }
       const total = cartTotal(order.items);
+      const unresolved = unresolvedManualItems([order]);
       const listText = order.items.map(item => `${item.title}${item.option ? ` ${item.option}` : ""} ${item.qty}개`).join(", ");
       sms.value = `이미지미술학원입니다.\n${order.student} 학생 ${order.month} 재료비는 ${won(total)}입니다.\n주문내역: ${listText}`;
       receipt.innerHTML = `
@@ -2838,6 +2890,7 @@
           <strong>전공 기본재료 가격표</strong>
           <span>출결번호: ${order.attendanceNo || "-"} · 학생명: ${order.student} · ${order.campusLabel || campus.label}</span>
         </div>
+        ${unresolved.length ? `<div class="admin-warning">직접 입력 재료 ${unresolved.length}건의 금액 확인이 필요합니다. 단가를 입력한 뒤 CSV를 생성해주세요.</div>` : ""}
         <div class="top-actions" style="margin-bottom:10px">
           ${order.smsStatus === "sent"
             ? `<button class="danger" data-sms-unsent="${state.selectedOrder}">발송완료 취소</button>`
@@ -2848,13 +2901,13 @@
             <tr><th>품명</th><th>옵션</th><th class="number">수량</th><th class="number">단가</th><th class="number">금액</th></tr>
           </thead>
           <tbody>
-            ${order.items.map(item => `
+            ${order.items.map((item, itemIndex) => `
               <tr>
-                <td>${item.title}</td>
+                <td>${item.title}${isManualItem(item) ? `<br><span class="tag warn">직접 입력</span>` : ""}</td>
                 <td>${item.option || ""}</td>
                 <td class="number">${item.qty}</td>
-                <td class="number">${won(item.unitPrice)}</td>
-                <td class="number">${won(item.unitPrice * item.qty)}</td>
+                <td class="number"><input class="admin-price-input" inputmode="numeric" value="${itemUnitPrice(item) || ""}" data-admin-price="${state.selectedOrder}" data-admin-item="${itemIndex}" aria-label="관리자 단가 입력"></td>
+                <td class="number">${won(itemAmount(item))}</td>
               </tr>
             `).join("")}
             <tr><td colspan="4" class="number"><strong>청구금액</strong></td><td class="number"><strong>${won(total)}</strong></td></tr>
@@ -3305,6 +3358,12 @@
         setExportMessage("선택한 범위에 내보낼 주문이 없습니다.");
         return;
       }
+      const unresolved = unresolvedManualItems(targetOrders);
+      if (unresolved.length) {
+        const list = unresolved.slice(0, 10).map(({ order, item }) => `${order.student} - ${item.title}`).join("\n");
+        setExportMessage(`직접 입력 재료 중 금액이 0원인 항목이 ${unresolved.length}건 있습니다. 관리자 화면에서 주문을 선택해 단가를 입력한 뒤 다시 생성해주세요.<textarea readonly>${xmlEscape(list)}</textarea>`);
+        return;
+      }
       const invalid = targetOrders.filter(order => !/^\d+$/.test(String(order.attendanceNo || "")));
       if (invalid.length) {
         setExportMessage("출결번호는 숫자여야 문자발송 CSV에서 인식됩니다. 출결번호를 확인해주세요.");
@@ -3406,6 +3465,23 @@
       }
     });
 
+    document.addEventListener("change", event => {
+      if (event.target.dataset.adminPrice !== undefined) {
+        const order = state.orders[Number(event.target.dataset.adminPrice)];
+        const item = order && order.items[Number(event.target.dataset.adminItem)];
+        if (!item) return;
+        const price = parseMoney(event.target.value);
+        item.unitPrice = price;
+        item.rawPrice = price;
+        if (isManualItem(item) && price > 0) item.option = "학원 확인 완료";
+        order.updatedAt = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+        if (order.smsStatus === "sent") order.smsStatus = "needs_resend";
+        saveOrders();
+        renderOrders();
+        setExportMessage(`${order.student} 학생 ${item.title} 단가를 ${won(price)}으로 반영했습니다.`);
+      }
+    });
+
     document.addEventListener("input", event => {
       if (["search"].includes(event.target.id)) renderCatalog();
       if (event.target.dataset.cartQty !== undefined) {
@@ -3443,6 +3519,7 @@
       }
     });
 
+    document.getElementById("kakaoHelp").addEventListener("click", () => window.open(KAKAO_CHAT_URL, "_blank", "noopener"));
     document.getElementById("saveOrder").addEventListener("click", saveOrder);
     document.getElementById("loadExistingOrder").addEventListener("click", loadExistingOrder);
     document.getElementById("deleteOwnOrder").addEventListener("click", deleteOwnOrder);
