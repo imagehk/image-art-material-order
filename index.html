@@ -11,8 +11,10 @@
       --line: #d6dbe6;
       --soft: #f4f6f9;
       --paper: #ffffff;
-      --accent: #146c7c;
-      --accent-dark: #0f5866;
+      --accent: #002fbb;
+      --accent-dark: #001f82;
+      --accent-soft: #edf3ff;
+      --accent-line: #8fb0ff;
       --ok: #1f7a4d;
       --warn: #a85d00;
       --bad: #a83232;
@@ -104,6 +106,7 @@
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
+      box-shadow: 0 8px 18px rgba(0, 47, 187, .18);
     }
 
     button.primary:hover { background: var(--accent-dark); }
@@ -124,6 +127,18 @@
       color: var(--ink);
     }
 
+    .required-field {
+      background: var(--accent-soft);
+      border-color: var(--accent-line);
+      border-width: 2px;
+      font-weight: 800;
+    }
+
+    .required-field::placeholder {
+      color: #274278;
+      opacity: 1;
+    }
+
     textarea {
       resize: vertical;
       min-height: 124px;
@@ -136,6 +151,18 @@
       max-width: 1480px;
       margin: 0 auto;
       padding: 16px;
+    }
+
+    main.admin-mode {
+      grid-template-columns: 1fr;
+    }
+
+    main.admin-mode > aside {
+      display: none;
+    }
+
+    main.admin-mode > section:first-child {
+      display: none;
     }
 
     .tabs, .bar, .panel, .admin-band {
@@ -179,8 +206,10 @@
     }
 
     .bar {
-      padding: 12px;
+      padding: 14px;
       margin-bottom: 12px;
+      border-color: var(--accent-line);
+      background: #f8fbff;
     }
 
     .filters {
@@ -330,6 +359,15 @@
       font-weight: 850;
     }
 
+    .order-panel {
+      border-color: var(--accent-line);
+      box-shadow: 0 12px 34px rgba(0, 47, 187, .12);
+    }
+
+    .order-panel h2 {
+      color: var(--accent);
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -472,8 +510,8 @@
           <input id="search" type="search" placeholder="상품명, 색상, 옵션 검색">
           <select id="categoryFilter"></select>
           <select id="statusFilter">
+            <option value="available" selected>주문 가능</option>
             <option value="all">전체 상태</option>
-            <option value="available">주문 가능</option>
             <option value="unavailable">현재 주문 불가</option>
           </select>
         </div>
@@ -483,18 +521,18 @@
     </section>
 
     <aside>
-      <section class="panel">
+      <section class="panel order-panel">
         <h2>주문서</h2>
         <div class="student-grid">
-          <input id="attendanceNo" placeholder="출결번호" inputmode="numeric" value="">
-          <input id="studentName" placeholder="학생명" value="">
+          <input id="attendanceNo" class="required-field" placeholder="출결번호 입력" inputmode="numeric" value="">
+          <input id="studentName" class="required-field" placeholder="학생명 입력" value="">
         </div>
         <div class="student-grid">
           <div class="campus-box" id="campusLabel"></div>
-          <input id="orderDate" type="date">
+          <input id="orderDate" class="required-field" type="date">
         </div>
         <div class="student-grid">
-          <select id="orderMode">
+          <select id="orderMode" class="required-field">
             <option value="new">새 주문 작성</option>
             <option value="add">기존 주문에 추가</option>
             <option value="replace">기존 주문 수정</option>
@@ -2654,22 +2692,26 @@
     }
 
     function categories() {
-      return ["전체 분류", ...Array.from(new Set(state.products.map(product => product.category))).sort((a, b) => a.localeCompare(b, "ko"))];
+      return ["분류 선택", ...Array.from(new Set(state.products.map(product => product.category))).sort((a, b) => a.localeCompare(b, "ko"))];
     }
 
     function renderFilters() {
-      document.getElementById("categoryFilter").innerHTML = categories().map((item, index) => `<option value="${index ? item : "all"}">${item}</option>`).join("");
+      document.getElementById("categoryFilter").innerHTML = categories().map((item, index) => `<option value="${index ? item : ""}">${item}</option>`).join("");
     }
 
     function renderCatalog() {
       const search = document.getElementById("search").value.trim().toLowerCase();
       const category = document.getElementById("categoryFilter").value;
       const status = document.getElementById("statusFilter").value;
+      if (!search && !category) {
+        document.getElementById("catalog").innerHTML = `<div class="empty">상품명이나 색상을 검색하거나 분류를 선택해주세요.</div>`;
+        return;
+      }
       const filtered = state.products.filter(product => {
         const optionText = (product.options || []).map(optionName).join(" ");
         const text = `${product.title} ${product.category} ${optionText}`.toLowerCase();
         return (!search || text.includes(search))
-          && (category === "all" || product.category === category)
+          && (!category || product.category === category)
           && (status === "all" || (status === "available" ? product.available : !product.available));
       });
       document.getElementById("catalog").innerHTML = filtered.map(product => productCard(product, search)).join("") || `<div class="empty">검색 결과가 없습니다.</div>`;
@@ -2834,6 +2876,7 @@
       renderCart();
       renderOrders();
       renderProductAdmin();
+      document.querySelector("main").classList.toggle("admin-mode", state.activeTab === "admin");
       document.getElementById("adminArea").classList.toggle("hidden", state.activeTab !== "admin");
     }
 
