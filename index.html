@@ -557,6 +557,7 @@
     <aside>
       <section class="panel order-panel">
         <h2>주문서</h2>
+        <div id="closedNotice" class="closed-notice hidden"></div>
         <div class="student-grid">
           <input id="attendanceNo" class="required-field" placeholder="출결번호 입력" inputmode="numeric" value="">
           <input id="studentName" class="required-field" placeholder="학생명 입력" value="">
@@ -2693,8 +2694,21 @@
       apiPost({ action: "saveSettings", settings: state.settings }).catch(() => {});
     }
 
+    function currentDeadlineDate() {
+      const inputValue = document.getElementById("deadlineDate")?.value || "";
+      return state.settings.deadlineDate || inputValue || "";
+    }
+
     function deadlinePassed() {
-      return state.settings.deadlineDate && todayText > state.settings.deadlineDate;
+      const deadline = currentDeadlineDate();
+      return Boolean(deadline && todayText > deadline);
+    }
+
+    function studentEntryClosedMessage() {
+      const deadline = currentDeadlineDate();
+      return deadline
+        ? `수정 마감일(${deadline})이 지나 학생 화면에서는 주문/수정/삭제할 수 없습니다. 학원에 문의해주세요.`
+        : "학생 화면에서는 주문/수정/삭제할 수 없습니다. 학원에 문의해주세요.";
     }
 
     function orderStatusText(order) {
@@ -2958,13 +2972,27 @@
 
     function renderDeadlineStatus() {
       const status = document.getElementById("deadlineStatus");
-      if (!state.settings.deadlineDate) {
+      const deadline = currentDeadlineDate();
+      if (!deadline) {
         status.textContent = "수정 마감일이 아직 지정되지 않았습니다.";
-        return;
+      } else {
+        status.textContent = deadlinePassed()
+          ? `수정 마감됨: ${deadline}`
+          : `수정 가능: ${deadline} 23:59까지`;
       }
-      status.textContent = deadlinePassed()
-        ? `수정 마감됨: ${state.settings.deadlineDate}`
-        : `수정 가능: ${state.settings.deadlineDate}까지`;
+      const closed = deadlinePassed();
+      const notice = document.getElementById("closedNotice");
+      if (notice) {
+        notice.classList.toggle("hidden", !closed || state.activeTab === "admin");
+        notice.textContent = closed ? `현재는 주문서 접수 기간이 아닙니다. 수정 마감일(${deadline})이 지났습니다. 주문 오류나 추가 문의는 카카오채널로 남겨주세요.` : "";
+      }
+      ["saveOrder", "loadExistingOrder", "deleteOwnOrder", "addManualItem"].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.disabled = closed;
+      });
+      document.querySelectorAll("[data-add]").forEach(button => {
+        button.disabled = closed || button.closest("article")?.querySelector(".unavailable") !== null;
+      });
     }
 
     function renderAll() {
@@ -2972,6 +3000,7 @@
       renderCart();
       renderOrders();
       renderProductAdmin();
+      renderDeadlineStatus();
       document.querySelector("main").classList.toggle("admin-mode", state.activeTab === "admin");
       document.getElementById("adminArea").classList.toggle("hidden", state.activeTab !== "admin");
     }
@@ -3015,9 +3044,14 @@
     }
 
     function addManualItem() {
+      const message = document.getElementById("saveMessage");
+      if (deadlinePassed()) {
+        message.textContent = studentEntryClosedMessage();
+        renderDeadlineStatus();
+        return;
+      }
       const nameInput = document.getElementById("manualItemName");
       const qtyInput = document.getElementById("manualItemQty");
-      const message = document.getElementById("saveMessage");
       const title = nameInput.value.trim();
       const qty = Math.max(1, Number(qtyInput.value) || 1);
       if (!title) {
@@ -3045,6 +3079,12 @@
     }
 
     function addToCart(productId) {
+      const message = document.getElementById("saveMessage");
+      if (deadlinePassed()) {
+        message.textContent = studentEntryClosedMessage();
+        renderDeadlineStatus();
+        return;
+      }
       const product = state.products.find(item => item.id === productId);
       if (!product || !product.available) return;
       const optionElement = document.querySelector(`[data-option="${productId}"]`);
@@ -3079,7 +3119,8 @@
       const mode = document.getElementById("orderMode").value;
       const message = document.getElementById("saveMessage");
       if (deadlinePassed()) {
-        message.textContent = "수정 마감일이 지나 학생 화면에서는 저장할 수 없습니다. 학원에 문의해주세요.";
+        message.textContent = studentEntryClosedMessage();
+        renderDeadlineStatus();
         return;
       }
       if (!attendanceNo) {
@@ -3168,7 +3209,8 @@
       const student = document.getElementById("studentName").value.trim();
       const message = document.getElementById("saveMessage");
       if (deadlinePassed()) {
-        message.textContent = "수정 마감일이 지나 학생 화면에서는 삭제할 수 없습니다. 학원에 문의해주세요.";
+        message.textContent = studentEntryClosedMessage();
+        renderDeadlineStatus();
         return;
       }
       if (!attendanceNo) {
@@ -3219,7 +3261,8 @@
         return;
       }
       if (deadlinePassed()) {
-        message.textContent = "수정 마감일이 지나 학생 화면에서는 불러올 수 없습니다.";
+        message.textContent = studentEntryClosedMessage();
+        renderDeadlineStatus();
         return;
       }
       document.getElementById("studentName").value = order.student || "";
@@ -3514,8 +3557,11 @@
       if (event.target.id === "deadlineDate") {
         state.settings.deadlineDate = event.target.value;
         saveSettings();
-        renderDeadlineStatus();
-        renderOrders();
+        renderAll();
+        const deadlineText = event.target.value ? `${event.target.value} 23:59까지 주문/수정 가능` : "수정 마감일이 해제되었습니다.";
+        setExportMessage(`수정 마감일 저장 완료: ${xmlEscape(deadlineText)}`);
+        alert(`수정 마감일이 저장되었습니다.
+${deadlineText}`);
       }
     });
 
