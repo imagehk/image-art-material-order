@@ -668,12 +668,12 @@
     const todayText = `${seoulParts.year}-${seoulParts.month}-${seoulParts.day}`;
     const won = value => `${Math.round(value || 0).toLocaleString("ko-KR")}원`;
     const roundDisplay = value => Math.ceil((Number(value) || 0) / 100) * 100;
-    const adminPassword = "03070307";
+    const adminPassword = "1234";
     const campusConfigs = {
       painting: { id: "painting", label: "회화반", account: "본관" },
       design: { id: "design", label: "디자인반", account: "본관" },
       davinci: { id: "davinci", label: "다빈치관", account: "다빈치" },
-      yongsan: { id: "yongsan", label: "용산캠퍼스", account: "본관" }
+      yongsan: { id: "yongsan", label: "용산캠퍼스", account: "용산캠" }
     };
     const campusParam = new URLSearchParams(window.location.search).get("campus");
     const savedCampusId = localStorage.getItem("imageArtCampusV3");
@@ -2654,6 +2654,11 @@
       return state.orders.find(order => order.attendanceNo && order.attendanceNo === attendanceNo);
     }
 
+    function accountForOrder(order) {
+      if ((order && order.campusId) === "yongsan" || (order && order.campusLabel) === "용산캠퍼스") return "용산캠";
+      return (order && order.academyAccount) || campus.account;
+    }
+
     function normalizeStudentName(name) {
       return String(name || "").replace(/\s+/g, "").trim();
     }
@@ -3161,7 +3166,7 @@
     function exportOrders() {
       const header = ["출결번호", "학생명", "PC구분", "학원구분", "문자상태", "주문일", "최종수정", "상품명", "옵션", "수량", "단가", "금액", "관리상품번호"];
       const rows = state.orders.flatMap(order => order.items.map(item => [
-        order.attendanceNo, order.student, order.campusLabel || campus.label, order.academyAccount || campus.account, orderStatusText(order), order.date, order.updatedAt, item.title, item.option, itemQty(item), itemUnitPrice(item), itemAmount(item), item.productNo
+        order.attendanceNo, order.student, order.campusLabel || campus.label, accountForOrder(order), orderStatusText(order), order.date, order.updatedAt, item.title, item.option, itemQty(item), itemUnitPrice(item), itemAmount(item), item.productNo
       ]));
       const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell || "").replaceAll('"', '""')}"`).join(",")).join("\n");
       const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
@@ -3215,7 +3220,7 @@
       const rows = [
         ["재료구매표", "", "", "", "", "", "", "", "주문날짜", sheetName, "", "", "", "", "", "", "", "", "총계", "납부일"],
         ["no.", "이름", "학원구분", "품목1", "품목2", "품목3", "품목4", "품목5", "품목6", "품목7", "금액1", "금액2", "금액3", "금액4", "금액5", "금액6", "금액7", "", "총계", "납부일"],
-        ["", "", "본관/다빈치 선택", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+        ["", "", "본관/다빈치/용산캠 선택", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
       ];
       state.orders
         .slice()
@@ -3242,7 +3247,7 @@
           rows.push([
             attendance,
             order.student,
-            order.academyAccount || campus.account,
+            accountForOrder(order),
             ...items,
             ...amounts,
             cartTotal(order.items),
