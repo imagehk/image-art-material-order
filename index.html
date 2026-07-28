@@ -608,6 +608,7 @@
             <option value="add">기존 주문에 추가</option>
             <option value="replace">기존 주문 수정</option>
           </select>
+          <button id="studentLogout">로그아웃</button>
         </div>
         <div class="order-tools">
           <button id="loadExistingOrder">내 주문 불러오기</button>
@@ -3183,6 +3184,21 @@
       document.getElementById("saveMessage").textContent = "관리자에서 로그아웃했습니다.";
     }
 
+    function logoutStudent() {
+      document.getElementById("attendanceNo").value = "";
+      document.getElementById("studentName").value = "";
+      document.getElementById("orderMode").value = "new";
+      document.getElementById("manualItemName").value = "";
+      document.getElementById("manualItemQty").value = "1";
+      document.getElementById("search").value = "";
+      document.getElementById("orderDateLabel").textContent = `주문일 ${todayText}`;
+      state.cart = [];
+      state.selectedOrder = null;
+      saveCart();
+      renderAll();
+      document.getElementById("saveMessage").textContent = "로그아웃했습니다. 다음 학생은 출결번호와 학생명을 입력해주세요.";
+    }
+
     function addManualItem() {
       const message = document.getElementById("saveMessage");
       if (deadlinePassed()) {
@@ -3331,7 +3347,8 @@
       saveCart();
       saveOrders();
       renderAll();
-      alert(`${successMessage}\n장바구니가 비워졌습니다.`);
+      document.getElementById("saveMessage").textContent = "주문을 저장했습니다. 추가 주문이 없으면 로그아웃을 눌러주세요.";
+      alert("주문을 저장했습니다.\n추가 주문이 없으면 로그아웃을 눌러주세요.");
     }
 
     function deleteOrder(index) {
@@ -3732,6 +3749,7 @@ ${deadlineText}`);
 
     document.getElementById("kakaoHelp").addEventListener("click", () => window.open(KAKAO_CHAT_URL, "_blank", "noopener"));
     document.getElementById("saveOrder").addEventListener("click", saveOrder);
+    document.getElementById("studentLogout").addEventListener("click", logoutStudent);
     document.getElementById("loadExistingOrder").addEventListener("click", loadExistingOrder);
     document.getElementById("deleteOwnOrder").addEventListener("click", deleteOwnOrder);
     document.getElementById("addManualItem").addEventListener("click", addManualItem);
