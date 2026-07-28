@@ -608,7 +608,7 @@
             <option value="add">기존 주문에 추가</option>
             <option value="replace">기존 주문 수정</option>
           </select>
-          <button id="studentLogout">로그아웃</button>
+          <button id="studentSessionButton">로그인</button>
         </div>
         <div class="order-tools">
           <button id="loadExistingOrder">내 주문 불러오기</button>
@@ -2731,7 +2731,8 @@
       settings: JSON.parse(localStorage.getItem(storageKey("Settings")) || "{}"),
       selectedOrder: 0,
       activeTab: "student",
-      adminUnlocked: sessionStorage.getItem("imageArtAdminUnlocked") === "true"
+      adminUnlocked: sessionStorage.getItem("imageArtAdminUnlocked") === "true",
+      studentLoggedIn: false
     };
     let lastExportUrl = "";
 
@@ -3127,12 +3128,20 @@
         notice.classList.toggle("hidden", !closed || state.activeTab === "admin");
         notice.textContent = closed ? `현재는 주문서 접수 기간이 아닙니다. 수정 마감일(${deadline})이 지났습니다. 주문 오류나 추가 문의는 카카오채널로 남겨주세요.` : "";
       }
+      const locked = !state.studentLoggedIn;
       ["saveOrder", "loadExistingOrder", "deleteOwnOrder", "addManualItem"].forEach(id => {
         const element = document.getElementById(id);
-        if (element) element.disabled = closed;
+        if (element) element.disabled = closed || locked;
       });
+      const sessionButton = document.getElementById("studentSessionButton");
+      if (sessionButton) {
+        sessionButton.textContent = state.studentLoggedIn ? "로그아웃" : "로그인";
+        sessionButton.classList.toggle("primary", !state.studentLoggedIn);
+        sessionButton.classList.toggle("danger", state.studentLoggedIn);
+        sessionButton.disabled = closed;
+      }
       document.querySelectorAll("[data-add]").forEach(button => {
-        button.disabled = closed || button.closest("article")?.querySelector(".unavailable") !== null;
+        button.disabled = closed || locked || button.closest("article")?.querySelector(".unavailable") !== null;
       });
     }
 
@@ -3184,6 +3193,47 @@
       document.getElementById("saveMessage").textContent = "관리자에서 로그아웃했습니다.";
     }
 
+    function requireStudentLogin(actionText = "주문하려면") {
+      if (state.studentLoggedIn) return true;
+      const message = document.getElementById("saveMessage");
+      message.textContent = `${actionText} 먼저 출결번호와 학생명을 입력한 뒤 로그인해주세요.`;
+      document.getElementById("attendanceNo").focus();
+      renderDeadlineStatus();
+      return false;
+    }
+
+    function loginStudent() {
+      const attendanceNo = document.getElementById("attendanceNo").value.trim();
+      const student = document.getElementById("studentName").value.trim();
+      const message = document.getElementById("saveMessage");
+      if (deadlinePassed()) {
+        message.textContent = studentEntryClosedMessage();
+        renderDeadlineStatus();
+        return;
+      }
+      if (!attendanceNo) {
+        message.textContent = "로그인하려면 출결번호를 입력해주세요.";
+        document.getElementById("attendanceNo").focus();
+        return;
+      }
+      if (!student) {
+        message.textContent = "로그인하려면 학생명을 입력해주세요.";
+        document.getElementById("studentName").focus();
+        return;
+      }
+      const existing = orderByAttendanceNo(attendanceNo);
+      if (existing && !orderMatchesStudent(existing, student)) {
+        message.textContent = "출결번호와 학생명이 기존 주문 정보와 일치하지 않습니다.";
+        document.getElementById("studentName").focus();
+        return;
+      }
+      state.studentLoggedIn = true;
+      message.textContent = existing
+        ? "로그인했습니다. 기존 주문을 확인하려면 내 주문 불러오기를 눌러주세요."
+        : "로그인했습니다. 재료를 선택해 장바구니에 담아주세요.";
+      renderAll();
+    }
+
     function logoutStudent() {
       document.getElementById("attendanceNo").value = "";
       document.getElementById("studentName").value = "";
@@ -3192,6 +3242,7 @@
       document.getElementById("manualItemQty").value = "1";
       document.getElementById("search").value = "";
       document.getElementById("orderDateLabel").textContent = `주문일 ${todayText}`;
+      state.studentLoggedIn = false;
       state.cart = [];
       state.selectedOrder = null;
       saveCart();
@@ -3199,8 +3250,18 @@
       document.getElementById("saveMessage").textContent = "로그아웃했습니다. 다음 학생은 출결번호와 학생명을 입력해주세요.";
     }
 
+    function toggleStudentSession() {
+      if (state.studentLoggedIn) {
+        if (!confirm("로그아웃 하시겠습니까?")) return;
+        logoutStudent();
+        return;
+      }
+      loginStudent();
+    }
+
     function addManualItem() {
       const message = document.getElementById("saveMessage");
+      if (!requireStudentLogin("직접 입력 재료를 담으려면")) return;
       if (deadlinePassed()) {
         message.textContent = studentEntryClosedMessage();
         renderDeadlineStatus();
@@ -3236,6 +3297,7 @@
 
     function addToCart(productId) {
       const message = document.getElementById("saveMessage");
+      if (!requireStudentLogin("재료를 담으려면")) return;
       if (deadlinePassed()) {
         message.textContent = studentEntryClosedMessage();
         renderDeadlineStatus();
@@ -3274,6 +3336,7 @@
       const academyAccount = campus.account;
       const mode = document.getElementById("orderMode").value;
       const message = document.getElementById("saveMessage");
+      if (!requireStudentLogin("주문을 저장하려면")) return;
       if (deadlinePassed()) {
         message.textContent = studentEntryClosedMessage();
         renderDeadlineStatus();
@@ -3369,6 +3432,7 @@
       const attendanceNo = document.getElementById("attendanceNo").value.trim();
       const student = document.getElementById("studentName").value.trim();
       const message = document.getElementById("saveMessage");
+      if (!requireStudentLogin("내 주문을 삭제하려면")) return;
       if (deadlinePassed()) {
         message.textContent = studentEntryClosedMessage();
         renderDeadlineStatus();
@@ -3406,6 +3470,7 @@
       const attendanceNo = document.getElementById("attendanceNo").value.trim();
       const student = document.getElementById("studentName").value.trim();
       const message = document.getElementById("saveMessage");
+      if (!requireStudentLogin("내 주문을 불러오려면")) return;
       if (!attendanceNo) {
         message.textContent = "출결번호를 먼저 입력해주세요.";
         document.getElementById("attendanceNo").focus();
@@ -3709,6 +3774,11 @@
 
     document.addEventListener("input", event => {
       if (["search"].includes(event.target.id)) renderCatalog();
+      if (["attendanceNo", "studentName"].includes(event.target.id) && state.studentLoggedIn) {
+        state.studentLoggedIn = false;
+        document.getElementById("saveMessage").textContent = "학생 정보가 변경되어 로그아웃되었습니다. 다시 로그인해주세요.";
+        renderDeadlineStatus();
+      }
       if (event.target.dataset.cartQty !== undefined) {
         const index = Number(event.target.dataset.cartQty);
         state.cart[index].qty = Math.max(1, Number(event.target.value) || 1);
@@ -3749,7 +3819,7 @@ ${deadlineText}`);
 
     document.getElementById("kakaoHelp").addEventListener("click", () => window.open(KAKAO_CHAT_URL, "_blank", "noopener"));
     document.getElementById("saveOrder").addEventListener("click", saveOrder);
-    document.getElementById("studentLogout").addEventListener("click", logoutStudent);
+    document.getElementById("studentSessionButton").addEventListener("click", toggleStudentSession);
     document.getElementById("loadExistingOrder").addEventListener("click", loadExistingOrder);
     document.getElementById("deleteOwnOrder").addEventListener("click", deleteOwnOrder);
     document.getElementById("addManualItem").addEventListener("click", addManualItem);
