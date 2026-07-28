@@ -3541,7 +3541,7 @@
           const items = Array.from({ length: 7 }, (_, index) => visibleItems[index]?.name || "");
           const amounts = Array.from({ length: 8 }, (_, index) => visibleItems[index]?.amount || "");
           rows.push([
-            String(order.attendanceNo || ""),
+            excelTextForCsv(order.attendanceNo),
             order.student,
             accountForOrder(order),
             ...items,
