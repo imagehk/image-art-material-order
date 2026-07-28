@@ -308,6 +308,15 @@
       font-weight: 800;
     }
 
+    #orderRows select {
+      margin-top: 7px;
+      min-height: 34px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
     .admin-warning {
       margin: 0 0 10px;
       padding: 10px 12px;
@@ -2843,6 +2852,14 @@
       return (order && order.academyAccount) || campus.account;
     }
 
+    function campusOptionsHtml(selectedCampusId) {
+      const currentCampusId = selectedCampusId && selectedCampusId !== "all" ? selectedCampusId : "";
+      const options = Object.values(campusConfigs)
+        .filter(item => item.id !== "all")
+        .map(item => `<option value="${item.id}" ${item.id === currentCampusId ? "selected" : ""}>${item.label}</option>`);
+      return [`<option value="" ${currentCampusId ? "" : "selected"} disabled>소속 선택</option>`, ...options].join("");
+    }
+
     function normalizeStudentName(name) {
       return String(name || "").replace(/\s+/g, "").trim();
     }
@@ -2987,7 +3004,13 @@
     function renderOrders() {
       document.getElementById("orderRows").innerHTML = state.orders.map((order, index) => `
         <tr>
-          <td>${order.student}<br><span class="subtle">${order.attendanceNo ? `출결번호 ${order.attendanceNo}` : "출결번호 없음"} · ${order.campusLabel || campus.label}</span></td>
+          <td>
+            ${order.student}<br>
+            <span class="subtle">${order.attendanceNo ? `출결번호 ${order.attendanceNo}` : "출결번호 없음"}</span>
+            <select data-order-campus="${index}" aria-label="학생 소속 변경">
+              ${campusOptionsHtml(order.campusId)}
+            </select>
+          </td>
           <td>
             <span class="tag ${order.smsStatus === "needs_resend" ? "warn" : ""}">${orderStatusText(order)}</span>
             ${unresolvedManualItems([order]).length ? `<br><span class="tag warn">직접 입력 확인 필요</span>` : ""}
@@ -3651,6 +3674,19 @@
         saveOrders();
         renderOrders();
         setExportMessage(`${order.student} 학생 ${item.title} 단가를 ${won(price)}으로 반영했습니다.`);
+      }
+      if (event.target.dataset.orderCampus !== undefined) {
+        const order = state.orders[Number(event.target.dataset.orderCampus)];
+        const selectedCampus = campusConfigs[event.target.value];
+        if (!order || !selectedCampus || selectedCampus.id === "all") return;
+        order.campusId = selectedCampus.id;
+        order.campusLabel = selectedCampus.label;
+        order.academyAccount = selectedCampus.account;
+        order.updatedAt = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+        if (order.smsStatus === "sent") order.smsStatus = "needs_resend";
+        saveOrders();
+        renderOrders();
+        setExportMessage(`${order.student} 학생 소속을 ${selectedCampus.label}으로 수정했습니다.`);
       }
     });
 
