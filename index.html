@@ -344,6 +344,37 @@
       top: 82px;
     }
 
+    .manual-entry {
+      padding: 12px;
+      border: 2px solid var(--accent-line);
+      border-radius: 8px;
+      background: var(--accent-soft);
+    }
+
+    .manual-entry h3 {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .manual-entry-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 86px;
+      gap: 8px;
+    }
+
+    .manual-entry input {
+      border-color: var(--accent-line);
+      border-width: 2px;
+      font-weight: 800;
+    }
+
+    .manual-entry .subtle {
+      color: var(--accent-dark);
+      font-weight: 800;
+    }
+
     .panel {
       padding: 13px;
     }
@@ -379,6 +410,18 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .student-start {
+      margin: 12px 0;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+
+    .student-start h2 {
       margin-bottom: 10px;
     }
 
@@ -539,24 +582,8 @@
         <button data-tab="admin">관리자</button>
       </nav>
 
-      <div class="bar">
-        <div class="filters">
-          <input id="search" type="search" placeholder="상품명, 색상, 옵션 검색">
-          <select id="categoryFilter"></select>
-          <select id="statusFilter">
-            <option value="available" selected>주문 가능</option>
-            <option value="all">전체 상태</option>
-            <option value="unavailable">현재 주문 불가</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="catalog" id="catalog"></div>
-    </section>
-
-    <aside>
-      <section class="panel order-panel">
-        <h2>주문서</h2>
+      <div class="student-start">
+        <h2>학생 정보 입력</h2>
         <div id="closedNotice" class="closed-notice hidden"></div>
         <div class="student-grid">
           <input id="attendanceNo" class="required-field" placeholder="출결번호 입력" inputmode="numeric" value="">
@@ -577,15 +604,36 @@
           <button id="loadExistingOrder">내 주문 불러오기</button>
           <button id="deleteOwnOrder" class="danger">내 주문 삭제</button>
         </div>
-        <div class="manual-entry">
-          <h3>목록에 없는 재료 직접 입력</h3>
-          <div class="manual-entry-grid">
-            <input id="manualItemName" placeholder="재료명 입력">
-            <input id="manualItemQty" type="number" min="1" value="1" aria-label="수량">
-          </div>
-          <p class="subtle">직접 입력 재료는 학원 확인 후 금액이 반영됩니다.</p>
-          <button id="addManualItem" class="primary">직접 입력 재료 담기</button>
+      </div>
+
+      <div class="bar">
+        <div class="filters">
+          <input id="search" type="search" placeholder="상품명, 색상, 옵션 검색">
+          <select id="categoryFilter"></select>
+          <select id="statusFilter">
+            <option value="available" selected>주문 가능</option>
+            <option value="all">전체 상태</option>
+            <option value="unavailable">현재 주문 불가</option>
+          </select>
         </div>
+      </div>
+
+      <div class="catalog" id="catalog"></div>
+
+      <div class="manual-entry">
+        <h3>목록에 없는 재료 직접 입력</h3>
+        <div class="manual-entry-grid">
+          <input id="manualItemName" placeholder="재료명 입력">
+          <input id="manualItemQty" type="number" min="1" value="1" aria-label="수량">
+        </div>
+        <p class="subtle">직접 입력 재료는 학원 확인 후 금액이 반영됩니다.</p>
+        <button id="addManualItem" class="primary">직접 입력 재료 담기</button>
+      </div>
+    </section>
+
+    <aside>
+      <section class="panel order-panel">
+        <h2>주문서</h2>
         <table>
           <thead>
             <tr>
@@ -3208,6 +3256,7 @@
       }
       const existing = orderByAttendanceNo(attendanceNo);
       const nowText = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+      let successMessage = "";
       if (existing) {
         if (mode === "new") {
           message.textContent = "이미 같은 출결번호 주문이 있습니다. 기존 주문에 추가하거나 기존 주문 수정을 선택해주세요.";
@@ -3230,7 +3279,8 @@
         existing.updatedAt = nowText;
         if (existing.smsStatus === "sent") existing.smsStatus = "needs_resend";
         state.selectedOrder = state.orders.indexOf(existing);
-        message.textContent = mode === "replace" ? "기존 주문을 수정했습니다." : "기존 주문에 추가했습니다.";
+        successMessage = mode === "replace" ? "기존 주문을 수정했습니다." : "기존 주문에 추가했습니다.";
+        message.textContent = successMessage;
       } else {
         if (mode !== "new") {
           message.textContent = "저장된 기존 주문이 없습니다. 새 주문 작성으로 저장해주세요.";
@@ -3251,12 +3301,14 @@
           items: state.cart.map(item => ({ ...item }))
         });
         state.selectedOrder = 0;
-        message.textContent = "주문이 저장되었습니다.";
+        successMessage = "주문이 저장되었습니다.";
+        message.textContent = successMessage;
       }
       state.cart = [];
       saveCart();
       saveOrders();
       renderAll();
+      alert(`${successMessage}\n장바구니가 비워졌습니다.`);
     }
 
     function deleteOrder(index) {
@@ -3362,11 +3414,20 @@
       const targetOrders = exportTargetOrders();
       const header = ["출결번호", "학생명", "PC구분", "학원구분", "문자상태", "주문일", "최종수정", "상품명", "옵션", "수량", "단가", "금액", "관리상품번호"];
       const rows = targetOrders.flatMap(order => order.items.map(item => [
-        order.attendanceNo, order.student, order.campusLabel || campus.label, accountForOrder(order), orderStatusText(order), order.date, order.updatedAt, item.title, item.option, itemQty(item), itemUnitPrice(item), itemAmount(item), item.productNo
+        excelTextForCsv(order.attendanceNo), order.student, order.campusLabel || campus.label, accountForOrder(order), orderStatusText(order), order.date, order.updatedAt, item.title, item.option, itemQty(item), itemUnitPrice(item), itemAmount(item), item.productNo
       ]));
-      const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell || "").replaceAll('"', '""')}"`).join(",")).join("\n");
+      const csv = [header, ...rows].map(row => row.map(csvCell).join(",")).join("\n");
       const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
       downloadBlob(blob, `${campusLabelForExport()}_주문목록.csv`);
+    }
+
+    function csvCell(cell) {
+      return `"${String(cell ?? "").replaceAll('"', '""')}"`;
+    }
+
+    function excelTextForCsv(value) {
+      const text = String(value ?? "").trim();
+      return text ? `="${text.replaceAll('"', '""')}"` : "";
     }
 
     function setExportMessage(html) {
@@ -3439,9 +3500,8 @@
           }
           const items = Array.from({ length: 7 }, (_, index) => visibleItems[index]?.name || "");
           const amounts = Array.from({ length: 8 }, (_, index) => visibleItems[index]?.amount || "");
-          const attendance = /^\d+$/.test(String(order.attendanceNo || "")) ? Number(order.attendanceNo) : order.attendanceNo;
           rows.push([
-            attendance,
+            String(order.attendanceNo || ""),
             order.student,
             accountForOrder(order),
             ...items,
@@ -3460,7 +3520,7 @@
     function buildSmsCsvText() {
       const { rows } = smsExportRows();
       return rows
-        .map(row => row.map(cell => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(","))
+        .map(row => row.map(csvCell).join(","))
         .join("\n");
     }
 
